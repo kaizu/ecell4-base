@@ -83,10 +83,10 @@ cdef class UnitSpecies:
 cdef UnitSpecies UnitSpecies_from_Cpp_UnitSpecies(Cpp_UnitSpecies *sp)
 
 cdef extern from "boost/variant.hpp" namespace "boost":
-    cdef cppclass boost_variant "boost::variant" [T1, T2]:
+    cdef cppclass boost_variant "boost::variant" [T1, T2, T3, T4]:
         pass
 
-    U* boost_get "boost::get" [U, T1, T2] (boost_variant[T1, T2]*) except +
+    U* boost_get "boost::get" [U, T1, T2, T3, T4] (boost_variant[T1, T2, T3, T4]*) except +
 
 ## Cpp_Species
 #  ecell4::Species
@@ -103,10 +103,12 @@ cdef extern from "ecell4/core/Species.hpp" namespace "ecell4":
         bool operator>(Cpp_Species& rhs)
         string serial() # string == serial_type
         string get_attribute(string) except +
-        boost_variant[string, Real] get_attribute_as_variant(string) except +
+        boost_variant[string, Real, Integer, bool] get_attribute_as_variant(string) except +
         Integer count(Cpp_Species& sp) except +
         void set_attribute(string, string)
         void set_attribute(string, Real)
+        void set_attribute(string, Integer)
+        void set_attribute(string, bool)
         void remove_attribute(string) except +
         bool has_attribute(string)
         vector[pair[string, string]] list_attributes()

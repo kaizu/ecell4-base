@@ -30,7 +30,7 @@ public:
 
 protected:
 
-    typedef boost::variant<std::string, Real> value_type;
+    typedef boost::variant<std::string, Real, Integer, bool> value_type;
     typedef utils::get_mapper_mf<std::string, value_type>::type
         attributes_container_type;
 
@@ -99,7 +99,6 @@ public:
 
     std::vector<std::pair<std::string, std::string> > list_attributes() const;
 
-    // value_type get_attribute(const std::string& name_attr) const;
     std::string get_attribute(const std::string& name_attr) const;
     value_type get_attribute_as_variant(const std::string& name_attr) const;
 

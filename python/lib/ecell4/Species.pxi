@@ -1,10 +1,12 @@
 from cython.operator cimport dereference as deref, preincrement as inc
 from libcpp.string cimport string
 from cython cimport address
-cimport util
 
+cimport util
 cimport context
 
+import numbers
+from cpython cimport bool as bool_t
 
 cdef class Species:
     """A class representing a type of molecules with attributes.
@@ -83,7 +85,7 @@ cdef class Species:
 
         Returns
         -------
-        str:
+        value : str
             The value of the attribute.
 
         """
@@ -91,9 +93,9 @@ cdef class Species:
             tostring(name)).decode('UTF-8')
 
     def get_attribute_as_variant(self, name):
-        """get_attribute_as_variant(name) -> str
+        """get_attribute_as_variant(name) -> str, float, int, or bool
 
-        Return an attribute as an unicode string.
+        Return an attribute.
         If no corresponding attribute is found, raise an error.
 
         Parameters
@@ -103,19 +105,25 @@ cdef class Species:
 
         Returns
         -------
-        str:
+        value : str, float, int, or bool
             The value of the attribute.
 
         """
-        cdef boost_variant[string, Real] value = self.thisptr.get_attribute_as_variant(tostring(name))
-        cdef boost_variant[string, Real]* value_ptr = address(value)
-        cdef string* value_str = boost_get[string, string, Real](value_ptr)
+        cdef boost_variant[string, Real, Integer, bool] value = self.thisptr.get_attribute_as_variant(tostring(name))
+        cdef string* value_str = boost_get[string, string, Real, Integer, bool](address(value))
         if value_str != NULL:
             return deref(value_str).decode('UTF-8')
-        cdef Real* value_real = boost_get[Real, string, Real](value_ptr)
+        cdef Real* value_real = boost_get[Real, string, Real, Integer, bool](address(value))
         if value_real != NULL:
             return deref(value_real)
-        assert False
+        cdef Integer* value_int = boost_get[Integer, string, Real, Integer, bool](address(value))
+        if value_int != NULL:
+            return deref(value_int)
+        cdef bool* value_bool = boost_get[bool, string, Real, Integer, bool](address(value))
+        if value_bool != NULL:
+            return deref(value_bool)
+
+        raise RuntimeError('Never get here. Unsupported return type was given.')
 
     def set_attribute(self, name, value):
         """set_attribute(name, value)
@@ -127,14 +135,22 @@ cdef class Species:
         ----------
         name : str
             The name of an attribute.
-        value : str
+        value : str, float, int, or bool
             The value of an attribute.
 
         """
         if isinstance(value, str):
             self.thisptr.set_attribute(tostring(name), tostring(value))
-        else:
+        elif isinstance(value, bool_t):
+            self.thisptr.set_attribute(tostring(name), <bool> value)
+        elif isinstance(value, numbers.Integral):
+            self.thisptr.set_attribute(tostring(name), <Integer> value)
+        elif isinstance(value, numbers.Real):
             self.thisptr.set_attribute(tostring(name), <Real> value)
+        else:
+            raise TypeError(
+                'Type [{}] is not supported. str, int, float or bool must be given.'.format(
+                    type(value)))
 
     def remove_attribute(self, name):
         """remove_attribute(name)
