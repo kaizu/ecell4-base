@@ -90,6 +90,33 @@ cdef class Species:
         return self.thisptr.get_attribute(
             tostring(name)).decode('UTF-8')
 
+    def get_attribute_as_variant(self, name):
+        """get_attribute_as_variant(name) -> str
+
+        Return an attribute as an unicode string.
+        If no corresponding attribute is found, raise an error.
+
+        Parameters
+        ----------
+        name : str
+            The name of an attribute.
+
+        Returns
+        -------
+        str:
+            The value of the attribute.
+
+        """
+        cdef boost_variant[string, Real] value = self.thisptr.get_attribute_as_variant(tostring(name))
+        cdef boost_variant[string, Real]* value_ptr = address(value)
+        cdef string* value_str = boost_get[string, string, Real](value_ptr)
+        if value_str != NULL:
+            return deref(value_str).decode('UTF-8')
+        cdef Real* value_real = boost_get[Real, string, Real](value_ptr)
+        if value_real != NULL:
+            return deref(value_real)
+        assert False
+
     def set_attribute(self, name, value):
         """set_attribute(name, value)
 
@@ -104,7 +131,10 @@ cdef class Species:
             The value of an attribute.
 
         """
-        self.thisptr.set_attribute(tostring(name), tostring(value))
+        if isinstance(value, str):
+            self.thisptr.set_attribute(tostring(name), tostring(value))
+        else:
+            self.thisptr.set_attribute(tostring(name), <Real> value)
 
     def remove_attribute(self, name):
         """remove_attribute(name)

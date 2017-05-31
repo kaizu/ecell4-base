@@ -7,6 +7,7 @@
 #include <sstream>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
+#include <boost/variant.hpp>
 
 #include <ecell4/core/config.h>
 
@@ -29,8 +30,9 @@ public:
 
 protected:
 
-    typedef utils::get_mapper_mf<std::string, std::string>::type
-    attributes_container_type;
+    typedef boost::variant<std::string, Real> value_type;
+    typedef utils::get_mapper_mf<std::string, value_type>::type
+        attributes_container_type;
 
 public:
 
@@ -96,12 +98,21 @@ public:
     }
 
     std::vector<std::pair<std::string, std::string> > list_attributes() const;
+
+    // value_type get_attribute(const std::string& name_attr) const;
     std::string get_attribute(const std::string& name_attr) const;
-    void set_attribute(const std::string& name_attr, const std::string& value);
+    value_type get_attribute_as_variant(const std::string& name_attr) const;
+
+    template <typename T_>
+    void set_attribute(const std::string& name_attr, const T_& value)
+    {
+        attributes_[name_attr] = value;
+    }
+
     void set_attributes(const Species& sp);
-    void overwrite_attributes(const Species& sp);
     void remove_attribute(const std::string& name_attr);
     bool has_attribute(const std::string& name_attr) const;
+    void overwrite_attributes(const Species& sp);
 
     bool operator==(const Species& rhs) const;
     bool operator!=(const Species& rhs) const;

@@ -54,12 +54,13 @@ std::vector<std::pair<std::string, std::string> > Species::list_attributes() con
     for (attributes_container_type::const_iterator
         i(attributes_.begin()); i != attributes_.end(); ++i)
     {
-        retval.push_back(*i);
+        // retval.push_back(*i);
+        retval.push_back(std::make_pair((*i).first, boost::get<std::string>((*i).second)));
     }
     return retval;
 }
 
-std::string Species::get_attribute(const std::string& name_attr) const
+Species::value_type Species::get_attribute_as_variant(const std::string& name_attr) const
 {
     attributes_container_type::const_iterator
         i(attributes_.find(name_attr));
@@ -73,9 +74,9 @@ std::string Species::get_attribute(const std::string& name_attr) const
     return (*i).second;
 }
 
-void Species::set_attribute(const std::string& name_attr, const std::string& value)
+std::string Species::get_attribute(const std::string& name_attr) const
 {
-    attributes_[name_attr] = value;
+    return boost::get<std::string>(get_attribute_as_variant(name_attr));
 }
 
 void Species::set_attributes(const Species& sp)
