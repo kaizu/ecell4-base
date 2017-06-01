@@ -8,6 +8,22 @@ cimport context
 import numbers
 from cpython cimport bool as bool_t
 
+cdef boost_get_from_Cpp_Species_value_type(Cpp_Species_value_type value):
+    cdef string* value_str = boost_get[string, string, Real, Integer, bool](address(value))
+    if value_str != NULL:
+        return deref(value_str).decode('UTF-8')
+    cdef Real* value_real = boost_get[Real, string, Real, Integer, bool](address(value))
+    if value_real != NULL:
+        return deref(value_real)
+    cdef Integer* value_int = boost_get[Integer, string, Real, Integer, bool](address(value))
+    if value_int != NULL:
+        return deref(value_int)
+    cdef bool* value_bool = boost_get[bool, string, Real, Integer, bool](address(value))
+    if value_bool != NULL:
+        return deref(value_bool)
+
+    raise RuntimeError('Never get here. Unsupported return type was given.')
+
 cdef class Species:
     """A class representing a type of molecules with attributes.
 
@@ -109,21 +125,7 @@ cdef class Species:
             The value of the attribute.
 
         """
-        cdef boost_variant[string, Real, Integer, bool] value = self.thisptr.get_attribute_as_variant(tostring(name))
-        cdef string* value_str = boost_get[string, string, Real, Integer, bool](address(value))
-        if value_str != NULL:
-            return deref(value_str).decode('UTF-8')
-        cdef Real* value_real = boost_get[Real, string, Real, Integer, bool](address(value))
-        if value_real != NULL:
-            return deref(value_real)
-        cdef Integer* value_int = boost_get[Integer, string, Real, Integer, bool](address(value))
-        if value_int != NULL:
-            return deref(value_int)
-        cdef bool* value_bool = boost_get[bool, string, Real, Integer, bool](address(value))
-        if value_bool != NULL:
-            return deref(value_bool)
-
-        raise RuntimeError('Never get here. Unsupported return type was given.')
+        return boost_get_from_Cpp_Species_value_type(self.thisptr.get_attribute_as_variant(tostring(name)))
 
     def set_attribute(self, name, value):
         """set_attribute(name, value)
@@ -196,9 +198,13 @@ cdef class Species:
             ``name`` and ``value`` are given as unicode strings.
 
         """
-        retval = self.thisptr.list_attributes()
-        return [(key.decode('UTF-8'), value.decode('UTF-8'))
-            for key, value in retval]
+        cdef vector[pair[string, Cpp_Species_value_type]] attrs = self.thisptr.list_attributes()
+        res = []
+        cdef vector[pair[string, Cpp_Species_value_type]].iterator it = attrs.begin()
+        while it != attrs.end():
+            res.append((deref(it).first.decode('UTF-8'), boost_get_from_Cpp_Species_value_type(deref(it).second)))
+            inc(it)
+        return res
 
     def add_unit(self, UnitSpecies usp):
         """add_unit(usp)

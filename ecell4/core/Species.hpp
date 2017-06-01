@@ -61,8 +61,8 @@ public:
     Species(const Species& another)
         : serial_(another.serial()), attributes_()
     {
-        const std::vector<std::pair<std::string, std::string> > attrs = another.list_attributes();
-        for (std::vector<std::pair<std::string, std::string> >::const_iterator
+        const std::vector<std::pair<std::string, value_type> > attrs = another.list_attributes();
+        for (std::vector<std::pair<std::string, value_type> >::const_iterator
             i(attrs.begin()); i != attrs.end(); i++)
         {
             set_attribute((*i).first, (*i).second);
@@ -97,7 +97,7 @@ public:
         return attributes_;
     }
 
-    std::vector<std::pair<std::string, std::string> > list_attributes() const;
+    std::vector<std::pair<std::string, value_type> > list_attributes() const;
 
     std::string get_attribute(const std::string& name_attr) const;
     value_type get_attribute_as_variant(const std::string& name_attr) const;
