@@ -627,28 +627,27 @@ public:
 
         if (sp.has_attribute("radius") && sp.has_attribute("D"))
         {
-            radius = std::atof(sp.get_attribute("radius").c_str());
-            D = std::atof(sp.get_attribute("D").c_str());
+            radius = sp.template get_attribute_as<ecell4::Real>("radius");
+            D = sp.template get_attribute_as<ecell4::Real>("D");
             if (sp.has_attribute("structure_id"))
             {
-                structure_id = sp.get_attribute("structure_id");
+                structure_id = sp.template get_attribute_as<std::string>("structure_id");
             }
         }
         else if (boost::shared_ptr<model_type> bound_model = lock_model())
         {
-            ecell4::Species attributed(bound_model->apply_species_attributes(sp));
+            ecell4::Species newsp(bound_model->apply_species_attributes(sp));
 
-            if (attributed.has_attribute("radius")
-                && attributed.has_attribute("D"))
+            if (newsp.has_attribute("radius")
+                && newsp.has_attribute("D"))
             {
-                radius = std::atof(
-                    attributed.get_attribute("radius").c_str());
-                D = std::atof(attributed.get_attribute("D").c_str());
+                radius = newsp.template get_attribute_as<ecell4::Real>("radius");
+                D = newsp.template get_attribute_as<ecell4::Real>("D");
             }
 
-            if (sp.has_attribute("structure_id"))
+            if (newsp.has_attribute("structure_id"))
             {
-                structure_id = attributed.get_attribute("structure_id");
+                structure_id = newsp.template get_attribute_as<std::string>("structure_id");
             }
         }
 

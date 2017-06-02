@@ -88,28 +88,28 @@ cdef class Species:
         """Return the serial name as an unicode string."""
         return self.thisptr.serial().decode('UTF-8')
 
+    # def get_attribute(self, name):
+    #     """get_attribute(name) -> str
+
+    #     Return an attribute as an unicode string.
+    #     If no corresponding attribute is found, raise an error.
+
+    #     Parameters
+    #     ----------
+    #     name : str
+    #         The name of an attribute.
+
+    #     Returns
+    #     -------
+    #     value : str
+    #         The value of the attribute.
+
+    #     """
+    #     return self.thisptr.get_attribute(
+    #         tostring(name)).decode('UTF-8')
+
     def get_attribute(self, name):
-        """get_attribute(name) -> str
-
-        Return an attribute as an unicode string.
-        If no corresponding attribute is found, raise an error.
-
-        Parameters
-        ----------
-        name : str
-            The name of an attribute.
-
-        Returns
-        -------
-        value : str
-            The value of the attribute.
-
-        """
-        return self.thisptr.get_attribute(
-            tostring(name)).decode('UTF-8')
-
-    def get_attribute_as_variant(self, name):
-        """get_attribute_as_variant(name) -> str, float, int, or bool
+        """get_attribute(name) -> str, float, int, or bool
 
         Return an attribute.
         If no corresponding attribute is found, raise an error.
@@ -125,7 +125,7 @@ cdef class Species:
             The value of the attribute.
 
         """
-        return boost_get_from_Cpp_Species_value_type(self.thisptr.get_attribute_as_variant(tostring(name)))
+        return boost_get_from_Cpp_Species_value_type(self.thisptr.get_attribute(tostring(name)))
 
     def set_attribute(self, name, value):
         """set_attribute(name, value)

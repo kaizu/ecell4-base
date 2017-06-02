@@ -28,10 +28,11 @@ public:
     typedef UnitSpecies::serial_type serial_type; //XXX: std::string
     typedef std::vector<UnitSpecies> container_type;
 
+    typedef boost::variant<std::string, Real, Integer, bool> attribute_type;
+
 protected:
 
-    typedef boost::variant<std::string, Real, Integer, bool> value_type;
-    typedef utils::get_mapper_mf<std::string, value_type>::type
+    typedef utils::get_mapper_mf<std::string, attribute_type>::type
         attributes_container_type;
 
 public:
@@ -61,8 +62,8 @@ public:
     Species(const Species& another)
         : serial_(another.serial()), attributes_()
     {
-        const std::vector<std::pair<std::string, value_type> > attrs = another.list_attributes();
-        for (std::vector<std::pair<std::string, value_type> >::const_iterator
+        const std::vector<std::pair<std::string, attribute_type> > attrs = another.list_attributes();
+        for (std::vector<std::pair<std::string, attribute_type> >::const_iterator
             i(attrs.begin()); i != attrs.end(); i++)
         {
             set_attribute((*i).first, (*i).second);
@@ -97,10 +98,12 @@ public:
         return attributes_;
     }
 
-    std::vector<std::pair<std::string, value_type> > list_attributes() const;
+    std::vector<std::pair<std::string, attribute_type> > list_attributes() const;
 
-    std::string get_attribute(const std::string& name_attr) const;
-    value_type get_attribute_as_variant(const std::string& name_attr) const;
+    template <typename T_>
+    T_ get_attribute_as(const std::string& name_attr) const;
+
+    attribute_type get_attribute(const std::string& name_attr) const;
 
     template <typename T_>
     void set_attribute(const std::string& name_attr, const T_& value)
