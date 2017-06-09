@@ -35,8 +35,8 @@ BOOST_AUTO_TEST_CASE(Species_test_attributes)
     Species species("test");
     species.set_attribute("attr1", "value1");
     species.set_attribute("attr2", "value2");
-    BOOST_CHECK_EQUAL(species.get_attribute("attr1"), "value1");
-    BOOST_CHECK_EQUAL(species.get_attribute("attr2"), "value2");
+    BOOST_CHECK_EQUAL(species.get_attribute_as<std::string>("attr1"), "value1");
+    BOOST_CHECK_EQUAL(species.get_attribute_as<std::string>("attr2"), "value2");
     species.remove_attribute("attr1");
 }
 

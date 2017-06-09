@@ -100,10 +100,19 @@ public:
 
     std::vector<std::pair<std::string, attribute_type> > list_attributes() const;
 
-    template <typename T_>
-    T_ get_attribute_as(const std::string& name_attr) const;
-
     attribute_type get_attribute(const std::string& name_attr) const;
+
+    template <typename T_>
+    T_ get_attribute_as(const std::string& name_attr) const
+    {
+        attribute_type val = get_attribute(name_attr);
+        if (T_* x = boost::get<T_>(&val))
+        {
+            return (*x);
+        }
+        throw NotSupported("An attribute has incorrect type.");
+    }
+
 
     template <typename T_>
     void set_attribute(const std::string& name_attr, const T_& value)
@@ -171,6 +180,26 @@ protected:
     serial_type serial_;
     attributes_container_type attributes_;
 };
+
+template <>
+inline Real Species::get_attribute_as<Real>(const std::string& name_attr) const
+{
+    attribute_type val = get_attribute(name_attr);
+    if (Real* x = boost::get<Real>(&val))
+    {
+        return (*x);
+    }
+    else if (Integer* x = boost::get<Integer>(&val))
+    {
+        return static_cast<Real>(*x);
+    }
+    else if (std::string* x = boost::get<std::string>(&val))
+    {
+        return std::atof((*x).c_str());
+    }
+    throw NotSupported("An attribute has incorrect type.");
+}
+
 
 Species format_species(const Species& sp);
 

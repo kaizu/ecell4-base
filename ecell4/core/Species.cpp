@@ -78,36 +78,6 @@ Species::attribute_type Species::get_attribute(const std::string& name_attr) con
 //     return boost::get<std::string>(get_attribute_as_variant(name_attr));
 // }
 
-template <typename T_>
-T_ Species::get_attribute_as(const std::string& name_attr) const
-{
-    attribute_type val = get_attribute(name_attr);
-    if (T_* x = boost::get<T_>(&val))
-    {
-        return (*x);
-    }
-    throw NotSupported("An attribute has incorrect type.");
-}
-
-template <>
-Real Species::get_attribute_as<Real>(const std::string& name_attr) const
-{
-    attribute_type val = get_attribute(name_attr);
-    if (Real* x = boost::get<Real>(&val))
-    {
-        return (*x);
-    }
-    else if (Integer* x = boost::get<Integer>(&val))
-    {
-        return static_cast<Real>(*x);
-    }
-    else if (std::string* x = boost::get<std::string>(&val))
-    {
-        return std::atof((*x).c_str());
-    }
-    throw NotSupported("An attribute has incorrect type.");
-}
-
 void Species::set_attributes(const Species& sp)
 {
     attributes_ = sp.attributes();
