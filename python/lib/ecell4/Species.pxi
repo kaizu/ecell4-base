@@ -38,12 +38,10 @@ cdef class Species:
         ----------
         serial : str, optional
             The serial name.
-        radius : str, optional
+        radius : float, optional
             The radius of a molecule.
-            This must be given as a string.
-        D : str, optional
+        D : foat, optional
             The diffusion rate of a molecule.
-            This must be given as a string.
         location : str, optional
             The location of a molecule.
 
@@ -53,20 +51,29 @@ cdef class Species:
     def __cinit__(self, serial=None, radius=None, D=None, location=None):
         if serial is None:
             self.thisptr = new Cpp_Species()
-        elif radius is not None and D is not None:
-            if location is None:
-                self.thisptr = new Cpp_Species(
-                    tostring(serial),
-                    tostring(radius),
-                    tostring(D))
-            else:
-                self.thisptr = new Cpp_Species(
-                    tostring(serial),
-                    tostring(radius),
-                    tostring(D),
-                    tostring(location))
-        else:
+        elif radius is None:
             self.thisptr = new Cpp_Species(tostring(serial)) #XXX:
+        elif D is None:
+            raise ValueError(
+                'D must be given. D is not optional when radius is given.')
+        elif location is None:
+            if isinstance(radius, str) and isinstance(D, str):
+                self.thisptr = new Cpp_Species(
+                    tostring(serial), tostring(radius), tostring(D))
+            elif isinstance(radius, numbers.Real) and isinstance(D, numbers.Real):
+                self.thisptr = new Cpp_Species(
+                    tostring(serial), <Real>radius, <Real>D)
+            else:
+                raise TypeError('radius and D must be float.')
+        else:
+            if isinstance(radius, str) and isinstance(D, str):
+                self.thisptr = new Cpp_Species(
+                    tostring(serial), tostring(radius), tostring(D), tostring(location))
+            elif isinstance(radius, numbers.Real) and isinstance(D, numbers.Real):
+                self.thisptr = new Cpp_Species(
+                    tostring(serial), <Real>radius, <Real>D, tostring(location))
+            else:
+                raise TypeError('radius and D must be float.')
 
     def __dealloc__(self):
         del self.thisptr

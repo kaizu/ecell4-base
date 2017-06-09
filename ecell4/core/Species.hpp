@@ -49,16 +49,6 @@ public:
         ;
     }
 
-    Species(
-        const serial_type& name, const std::string& radius, const std::string& D,
-        const std::string location = "")
-        : serial_(name), attributes_()
-    {
-        set_attribute("radius", radius);
-        set_attribute("D", D);
-        set_attribute("location", location);
-    }
-
     Species(const Species& another)
         : serial_(another.serial()), attributes_()
     {
@@ -68,6 +58,29 @@ public:
         {
             set_attribute((*i).first, (*i).second);
         }
+    }
+
+    Species(
+        const serial_type& name, const Real& radius, const Real& D,
+        const std::string location = "")
+        : serial_(name), attributes_()
+    {
+        set_attribute("radius", radius);
+        set_attribute("D", D);
+        set_attribute("location", location);
+    }
+
+    /*
+     * The following constructor will be deprecated. Use the above one.
+     */
+    Species(
+        const serial_type& name, const std::string& radius, const std::string& D,
+        const std::string location = "")
+        : serial_(name), attributes_()
+    {
+        set_attribute("radius", radius);
+        set_attribute("D", D);
+        set_attribute("location", location);
     }
 
     const serial_type serial() const
