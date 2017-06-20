@@ -550,25 +550,25 @@ protected:
         std::pair<domain_id_type, length_type> closest;
     };
 
-    template<typename Tcol_>
-    struct shell_collector_applier
-    {
-        typedef Tcol_ collector_type;
+    // template<typename Tcol_>
+    // struct shell_collector_applier
+    // {
+    //     typedef Tcol_ collector_type;
 
-        shell_collector_applier(collector_type& col,
-                                   position_type const& pos)
-            : col_(col), pos_(pos) {}
+    //     shell_collector_applier(collector_type& col,
+    //                                position_type const& pos)
+    //         : col_(col), pos_(pos) {}
 
-        template<typename T>
-        void operator()(T const& smat) const
-        {
-            world_type::traits_type::each_neighbor(*smat.second, col_, pos_);
-        }
+    //     template<typename T>
+    //     void operator()(T const& smat) const
+    //     {
+    //         world_type::traits_type::each_neighbor(*smat.second, col_, pos_);
+    //     }
 
-    private:
-        collector_type& col_;
-        position_type pos_;
-    };
+    // private:
+    //     collector_type& col_;
+    //     position_type pos_;
+    // };
 
     template<typename Tmap_>
     struct domain_shell_map_builder
@@ -1174,8 +1174,8 @@ public:
         typedef domain_collector<no_filter> collector_type;
         no_filter f;
         collector_type col((*base_type::world_), p, f);
-        (shell_collector_applier<collector_type>(col, p.position()))(boost::fusion::pair<spherical_shell_type, spherical_shell_matrix_type*>(ssmat_.get()));
-        (shell_collector_applier<collector_type>(col, p.position()))(boost::fusion::pair<cylindrical_shell_type, cylindrical_shell_matrix_type*>(csmat_.get()));
+        world_type::traits_type::each_neighbor(*ssmat_, col, p.position());
+        world_type::traits_type::each_neighbor(*csmat_, col, p.position());
         return col.neighbors.container().get();
     }
 
@@ -1185,8 +1185,8 @@ public:
         typedef domain_collector<one_id_filter> collector_type;
         one_id_filter f(ignore);
         collector_type col((*base_type::world_), p, f);
-        (shell_collector_applier<collector_type>(col, p.position()))(boost::fusion::pair<spherical_shell_type, spherical_shell_matrix_type*>(ssmat_.get()));
-        (shell_collector_applier<collector_type>(col, p.position()))(boost::fusion::pair<cylindrical_shell_type, cylindrical_shell_matrix_type*>(csmat_.get()));
+        world_type::traits_type::each_neighbor(*ssmat_, col, p.position());
+        world_type::traits_type::each_neighbor(*csmat_, col, p.position());
         return col.neighbors.container().get();
     }
 
@@ -2709,8 +2709,8 @@ protected:
 
         collector_type col((*base_type::world_), p, ignore);
         // boost::fusion::for_each(smatm_, shell_collector_applier<collector_type>(col, p.position()));
-        (shell_collector_applier<collector_type>(col, p.position()))(boost::fusion::pair<spherical_shell_type, spherical_shell_matrix_type*>(ssmat_.get()));
-        (shell_collector_applier<collector_type>(col, p.position()))(boost::fusion::pair<cylindrical_shell_type, cylindrical_shell_matrix_type*>(csmat_.get()));
+        world_type::traits_type::each_neighbor(*ssmat_, col, p.position());
+        world_type::traits_type::each_neighbor(*csmat_, col, p.position());
         return std::make_pair(col.intruders.container().get(), col.closest);
     }
     // }}}
@@ -2723,8 +2723,8 @@ protected:
 
         collector_type col((*base_type::world_), p, ignore);
         // boost::fusion::for_each(smatm_, shell_collector_applier<collector_type>(col, p));
-        (shell_collector_applier<collector_type>(col, p))(boost::fusion::pair<spherical_shell_type, spherical_shell_matrix_type*>(ssmat_.get()));
-        (shell_collector_applier<collector_type>(col, p))(boost::fusion::pair<cylindrical_shell_type, cylindrical_shell_matrix_type*>(csmat_.get()));
+        world_type::traits_type::each_neighbor(*ssmat_, col, p);
+        world_type::traits_type::each_neighbor(*csmat_, col, p);
         return col.closest;
     }
 
