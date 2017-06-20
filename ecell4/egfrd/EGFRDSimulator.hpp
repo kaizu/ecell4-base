@@ -593,29 +593,29 @@ protected:
     //     domain_shell_association& did_map_;
     // };
 
-    template<typename Tset_>
-    struct shell_id_collector
-    {
-        shell_id_collector(Tset_& shell_ids)
-            : shell_ids_(shell_ids) {}
+    // template<typename Tset_>
+    // struct shell_id_collector
+    // {
+    //     shell_id_collector(Tset_& shell_ids)
+    //         : shell_ids_(shell_ids) {}
 
-        template<typename T>
-        void operator()(T const& smat) const
-        {
-            std::for_each(
-                boost::begin(*smat.second),
-                boost::end(*smat.second),
-                compose_unary(
-                    boost::bind(&insert<Tset_>,
-                                boost::reference_wrapper<Tset_>(shell_ids_),
-                                _1),
-                    select_first<typename boost::remove_pointer<
-                        typename T::second_type>::type::value_type>()));
-        }
+    //     template<typename T>
+    //     void operator()(T const& smat) const
+    //     {
+    //         std::for_each(
+    //             boost::begin(*smat.second),
+    //             boost::end(*smat.second),
+    //             compose_unary(
+    //                 boost::bind(&insert<Tset_>,
+    //                             boost::reference_wrapper<Tset_>(shell_ids_),
+    //                             _1),
+    //                 select_first<typename boost::remove_pointer<
+    //                     typename T::second_type>::type::value_type>()));
+    //     }
 
-    private:
-        Tset_& shell_ids_;
-    };
+    // private:
+    //     Tset_& shell_ids_;
+    // };
 
     struct shell_finder
     {
@@ -1434,8 +1434,18 @@ public:
         std::set<shell_id_type> all_shell_ids;
         // boost::fusion::for_each(smatm_,
         //         shell_id_collector<std::set<shell_id_type> >(all_shell_ids));
-        (shell_id_collector<std::set<shell_id_type> >(all_shell_ids))(boost::fusion::pair<spherical_shell_type, spherical_shell_matrix_type*>(ssmat_.get()));
-        (shell_id_collector<std::set<shell_id_type> >(all_shell_ids))(boost::fusion::pair<cylindrical_shell_type, cylindrical_shell_matrix_type*>(csmat_.get()));
+
+        {
+            BOOST_FOREACH(typename spherical_shell_matrix_type::value_type pair, *ssmat_)
+            {
+                all_shell_ids.insert(pair.first);
+            }
+
+            BOOST_FOREACH(typename cylindrical_shell_matrix_type::value_type pair, *csmat_)
+            {
+                all_shell_ids.insert(pair.first);
+            }
+        }
 
         if (shells_correspond_to_domains != static_cast<std::size_t>(::size(all_shell_ids)))
         {
