@@ -323,23 +323,27 @@ public:
     };
 
 protected:
-    typedef boost::fusion::map<
-        boost::fusion::pair<spherical_shell_type, 
-                            MatrixSpace<spherical_shell_type,
-                                        shell_id_type, ecell4::utils::get_mapper_mf>*>,
-        boost::fusion::pair<cylindrical_shell_type, MatrixSpace<cylindrical_shell_type,
-                                        shell_id_type, ecell4::utils::get_mapper_mf>*> >
-            shell_matrix_map_type;
-    typedef typename boost::remove_pointer<
-        typename boost::fusion::result_of::value_at_key<
-            shell_matrix_map_type,
-            spherical_shell_type>::type>::type
-                spherical_shell_matrix_type;
-    typedef typename boost::remove_pointer<
-        typename boost::fusion::result_of::value_at_key<
-            shell_matrix_map_type,
-            cylindrical_shell_type>::type>::type
-                cylindrical_shell_matrix_type;
+    // typedef boost::fusion::map<
+    //     boost::fusion::pair<spherical_shell_type, 
+    //                         MatrixSpace<spherical_shell_type,
+    //                                     shell_id_type, ecell4::utils::get_mapper_mf>*>,
+    //     boost::fusion::pair<cylindrical_shell_type, MatrixSpace<cylindrical_shell_type,
+    //                                     shell_id_type, ecell4::utils::get_mapper_mf>*> >
+    //         shell_matrix_map_type;
+    // typedef typename boost::remove_pointer<
+    //     typename boost::fusion::result_of::value_at_key<
+    //         shell_matrix_map_type,
+    //         spherical_shell_type>::type>::type
+    //             spherical_shell_matrix_type;
+    // typedef typename boost::remove_pointer<
+    //     typename boost::fusion::result_of::value_at_key<
+    //         shell_matrix_map_type,
+    //         cylindrical_shell_type>::type>::type
+    //             cylindrical_shell_matrix_type;
+
+    typedef MatrixSpace<spherical_shell_type, shell_id_type, ecell4::utils::get_mapper_mf> spherical_shell_matrix_type;
+    typedef MatrixSpace<cylindrical_shell_type, shell_id_type, ecell4::utils::get_mapper_mf> cylindrical_shell_matrix_type;
+
     typedef typename ecell4::utils::get_mapper_mf<domain_id_type, boost::shared_ptr<domain_type> >::type domain_map;
     typedef typename network_rules_type::reaction_rules reaction_rules;
     typedef typename network_rules_type::reaction_rule_type reaction_rule_type;
