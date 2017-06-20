@@ -570,28 +570,28 @@ protected:
     //     position_type pos_;
     // };
 
-    template<typename Tmap_>
-    struct domain_shell_map_builder
-    {
-        typedef Tmap_ domain_shell_association;
-        domain_shell_map_builder(world_type const& world,
-                                 domain_shell_association& did_map)
-            : world_(world), did_map_(did_map) {}
+    // template<typename Tmap_>
+    // struct domain_shell_map_builder
+    // {
+    //     typedef Tmap_ domain_shell_association;
+    //     domain_shell_map_builder(world_type const& world,
+    //                              domain_shell_association& did_map)
+    //         : world_(world), did_map_(did_map) {}
 
-        template<typename T>
-        void operator()(T const& smat) const
-        {
-            BOOST_ASSERT(world_.edge_lengths() == (*smat.second).edge_lengths());
-            BOOST_FOREACH (typename boost::remove_pointer<typename T::second_type>::type::value_type pair, *smat.second)
-            {
-                did_map_[pair.second.did()].insert(pair.first);
-            }
-        }
+    //     template<typename T>
+    //     void operator()(T const& smat) const
+    //     {
+    //         BOOST_ASSERT(world_.edge_lengths() == (*smat.second).edge_lengths());
+    //         BOOST_FOREACH (typename boost::remove_pointer<typename T::second_type>::type::value_type pair, *smat.second)
+    //         {
+    //             did_map_[pair.second.did()].insert(pair.first);
+    //         }
+    //     }
 
-    private:
-        world_type const& world_;
-        domain_shell_association& did_map_;
-    };
+    // private:
+    //     world_type const& world_;
+    //     domain_shell_association& did_map_;
+    // };
 
     template<typename Tset_>
     struct shell_id_collector
@@ -1367,8 +1367,20 @@ public:
         // boost::fusion::for_each(smatm_,
         //         domain_shell_map_builder<domain_shell_association>(
         //             (*base_type::world_), did_map));
-        (domain_shell_map_builder<domain_shell_association>((*base_type::world_), did_map))(boost::fusion::pair<spherical_shell_type, spherical_shell_matrix_type*>(ssmat_.get()));
-        (domain_shell_map_builder<domain_shell_association>((*base_type::world_), did_map))(boost::fusion::pair<cylindrical_shell_type, cylindrical_shell_matrix_type*>(csmat_.get()));
+
+        {
+            BOOST_ASSERT((*base_type::world_).edge_lengths() == (*ssmat_).edge_lengths());
+            BOOST_FOREACH (typename spherical_shell_matrix_type::value_type pair, *ssmat_)
+            {
+                did_map[pair.second.did()].insert(pair.first);
+            }
+
+            BOOST_ASSERT((*base_type::world_).edge_lengths() == (*csmat_).edge_lengths());
+            BOOST_FOREACH (typename cylindrical_shell_matrix_type::value_type pair, *csmat_)
+            {
+                did_map[pair.second.did()].insert(pair.first);
+            }
+        }
 
         std::set<domain_id_type> scheduled_domains;
         typename domain_type::size_type shells_correspond_to_domains(0);
