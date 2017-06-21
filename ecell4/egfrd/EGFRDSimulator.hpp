@@ -2569,7 +2569,9 @@ protected:
     // }}}
 
     // attempt_single_reaction {{{
-    bool attempt_single_reaction(single_type& domain)
+    // bool attempt_single_reaction(single_type& domain)
+    template <typename T>
+    bool attempt_single_reaction(AnalyticalSingle<traits_type, T>& domain)
     {
         const particle_id_pair reactant(domain.particle());
         const molecule_info_type reactant_species((*base_type::world_).get_molecule_info(reactant.second.species()));
@@ -3808,7 +3810,16 @@ protected:
 
                 try
                 {
-                    attempt_single_reaction(*new_single[index]);
+                    if (boost::shared_ptr<corresponding_single_type> new_single_
+                        = boost::dynamic_pointer_cast<corresponding_single_type>(new_single[index]))
+                    {
+                        attempt_single_reaction(*new_single_);
+                    }
+                    else
+                    {
+                        throw not_implemented("?");
+                    }
+                    // attempt_single_reaction(*new_single[index]);
                 }
                 catch (no_space const&)
                 {
