@@ -1225,8 +1225,9 @@ public:
         BOOST_FOREACH (particle_id_pair const& pp,
                        (*base_type::world_).get_particles_range())
         {
-            boost::shared_ptr<single_type> single(create_single(pp));
-            add_event(*single, SINGLE_EVENT_ESCAPE);
+            create_single_add_escape_event(pp);
+            // boost::shared_ptr<single_type> single(create_single(pp));
+            // add_event(*single, SINGLE_EVENT_ESCAPE);
         }
 
         BOOST_FOREACH (reaction_rule_type const& rr,
@@ -1739,16 +1740,16 @@ protected:
         throw not_implemented("?");
     }
 
-    // void add_event(spherical_pair_type& domain, pair_event_kind const& kind)
-    // {
-    //     if (base_type::paranoiac_)
-    //         BOOST_ASSERT(domains_.find(domain.id()) != domains_.end());
+    void add_event(spherical_pair_type& domain, pair_event_kind const& kind)
+    {
+        if (base_type::paranoiac_)
+            BOOST_ASSERT(domains_.find(domain.id()) != domains_.end());
 
-    //     boost::shared_ptr<event_type> new_event(
-    //         new spherical_pair_event(this->t() + domain.dt(), domain, kind));
-    //     domain.event() = std::make_pair(scheduler_.add(new_event), new_event);
-    //     LOG_DEBUG(("add_event: #%d - %s", domain.event().first, boost::lexical_cast<std::string>(domain).c_str()));
-    // }
+        boost::shared_ptr<event_type> new_event(
+            new spherical_pair_event(this->t() + domain.dt(), domain, kind));
+        domain.event() = std::make_pair(scheduler_.add(new_event), new_event);
+        LOG_DEBUG(("add_event: #%d - %s", domain.event().first, boost::lexical_cast<std::string>(domain).c_str()));
+    }
 
     void add_event(cylindrical_pair_type& domain, pair_event_kind const& kind)
     {
@@ -1811,189 +1812,243 @@ protected:
         remove_event(domain.event().first);
     }
 
-    // create_single {{{
-    boost::shared_ptr<single_type> create_single(particle_id_pair const& p)
+    boost::shared_ptr<single_type> create_single_add_escape_event(particle_id_pair const& p)
     {
-        domain_kind kind(NONE);
-        single_type* new_single(0);
+        // boost::shared_ptr<single_type> new_single(create_single(p));
+        boost::shared_ptr<spherical_single_type> new_single(
+            create_spherical_single(p));
+
+        add_event(*new_single, SINGLE_EVENT_ESCAPE);
+        return new_single;
+    }
+
+    // create_single {{{
+    // boost::shared_ptr<single_type> create_single(particle_id_pair const& p)
+    // {
+    //     domain_kind kind(NONE);
+    //     single_type* new_single(0);
+    //     domain_id_type did(didgen_());
+
+    //     struct factory: ImmutativeStructureVisitor<typename world_type::traits_type>
+    //     {
+    //         virtual ~factory() {}
+
+    //         // virtual void operator()(spherical_surface_type const& structure) const
+    //         // {
+    //         //     throw not_implemented(
+    //         //         (boost::format("unsupported structure type: %s") %
+    //         //             boost::lexical_cast<std::string>(structure)).str());
+    //         // }
+
+    //         // virtual void operator()(cylindrical_surface_type const& structure) const
+    //         // {
+    //         //     // Heads up. The cylinder's *size*, not radius, is changed when
+    //         //     // you make the cylinder bigger, because of the redefinition of
+    //         //     // set_radius.
+    //         //     // The radius of a rod is not more than it has to be (namely
+    //         //     // the radius of the particle), so if the particle undergoes an
+    //         //     // unbinding reaction, we still have to clear the target volume
+    //         //     // and the move may be rejected (NoSpace error).
+    //         //     const cylindrical_shell_id_pair new_shell(
+    //         //         _this->new_shell(
+    //         //             did, typename cylindrical_shell_type::shape_type(
+    //         //                 p.second.position(), p.second.radius(),
+    //         //                 structure.shape().unit_z(),
+    //         //                 p.second.radius())));
+    //         //     new_single = new cylindrical_single_type(did, p, new_shell);
+    //         //     kind = CYLINDRICAL_SINGLE;
+    //         // }
+
+    //         // virtual void operator()(planar_surface_type const& structure) const
+    //         // {
+    //         //     cylindrical_shell_id_pair const new_shell(
+    //         //         _this->new_shell(did, typename cylindrical_shell_type::shape_type(
+    //         //             p.second.position(), p.second.radius(),
+    //         //             normalize(cross_product(
+    //         //                 structure.shape().unit_x(),
+    //         //                 structure.shape().unit_y())),
+    //         //             p.second.radius())));
+    //         //     new_single = new cylindrical_single_type(did, p, new_shell);
+    //         //     kind = CYLINDRICAL_SINGLE;
+    //         // }
+
+    //         virtual void operator()(cuboidal_region_type const& structure) const
+    //         {
+    //             spherical_shell_id_pair new_shell(
+    //                 _this->new_shell(
+    //                     did, typename spherical_shell_type::shape_type(
+    //                         p.second.position(), p.second.radius())));
+    //                 // _this->new_shell(did, ::shape(p.second)));
+    //             new_single = new spherical_single_type(did, p, new_shell);
+    //             kind = SPHERICAL_SINGLE;
+    //         }
+
+    //         factory(EGFRDSimulator* _this, particle_id_pair const& p,
+    //                 domain_id_type const& did, single_type*& new_single,
+    //                 domain_kind& kind)
+    //             : _this(_this), p(p), did(did), new_single(new_single),
+    //               kind(kind) {}
+
+    //         EGFRDSimulator* _this;
+    //         particle_id_pair const& p;
+    //         domain_id_type const& did;
+    //         single_type*& new_single;
+    //         domain_kind& kind;
+    //     };
+
+    //     molecule_info_type const species((*base_type::world_).get_molecule_info(p.second.species()));
+    //     // molecule_info_type const& species((*base_type::world_).find_molecule_info(p.second.species()));
+    //     dynamic_cast<particle_simulation_structure_type const&>(*(*base_type::world_).get_structure(species.structure_id)).accept(factory(this, p, did, new_single, kind));
+    //     boost::shared_ptr<domain_type> const retval(new_single);
+    //     domains_.insert(std::make_pair(did, retval));
+    //     BOOST_ASSERT(kind != NONE);
+    //     ++domain_count_per_type_[kind];
+    //     return boost::dynamic_pointer_cast<single_type>(retval);
+    // }
+
+    boost::shared_ptr<spherical_single_type> create_spherical_single(particle_id_pair const& p)
+    {
+        BOOST_ASSERT(
+            (*base_type::world_).get_molecule_info(p.second.species()).structure_id == "world");
+
         domain_id_type did(didgen_());
 
-        struct factory: ImmutativeStructureVisitor<typename world_type::traits_type>
-        {
-            virtual ~factory() {}
+        spherical_shell_id_pair shell(
+            new_shell(
+                did, typename spherical_shell_type::shape_type(
+                    p.second.position(), p.second.radius())));
+        boost::shared_ptr<spherical_single_type> new_single(
+            new spherical_single_type(did, p, shell));
+        domain_kind const kind = SPHERICAL_SINGLE;
 
-            // virtual void operator()(spherical_surface_type const& structure) const
-            // {
-            //     throw not_implemented(
-            //         (boost::format("unsupported structure type: %s") %
-            //             boost::lexical_cast<std::string>(structure)).str());
-            // }
-
-            // virtual void operator()(cylindrical_surface_type const& structure) const
-            // {
-            //     // Heads up. The cylinder's *size*, not radius, is changed when
-            //     // you make the cylinder bigger, because of the redefinition of
-            //     // set_radius.
-            //     // The radius of a rod is not more than it has to be (namely
-            //     // the radius of the particle), so if the particle undergoes an
-            //     // unbinding reaction, we still have to clear the target volume
-            //     // and the move may be rejected (NoSpace error).
-            //     const cylindrical_shell_id_pair new_shell(
-            //         _this->new_shell(
-            //             did, typename cylindrical_shell_type::shape_type(
-            //                 p.second.position(), p.second.radius(),
-            //                 structure.shape().unit_z(),
-            //                 p.second.radius())));
-            //     new_single = new cylindrical_single_type(did, p, new_shell);
-            //     kind = CYLINDRICAL_SINGLE;
-            // }
-
-            // virtual void operator()(planar_surface_type const& structure) const
-            // {
-            //     cylindrical_shell_id_pair const new_shell(
-            //         _this->new_shell(did, typename cylindrical_shell_type::shape_type(
-            //             p.second.position(), p.second.radius(),
-            //             normalize(cross_product(
-            //                 structure.shape().unit_x(),
-            //                 structure.shape().unit_y())),
-            //             p.second.radius())));
-            //     new_single = new cylindrical_single_type(did, p, new_shell);
-            //     kind = CYLINDRICAL_SINGLE;
-            // }
-
-            virtual void operator()(cuboidal_region_type const& structure) const
-            {
-                spherical_shell_id_pair new_shell(
-                    _this->new_shell(
-                        did, typename spherical_shell_type::shape_type(
-                            p.second.position(), p.second.radius())));
-                    // _this->new_shell(did, ::shape(p.second)));
-                new_single = new spherical_single_type(did, p, new_shell);
-                kind = SPHERICAL_SINGLE;
-            }
-
-            factory(EGFRDSimulator* _this, particle_id_pair const& p,
-                    domain_id_type const& did, single_type*& new_single,
-                    domain_kind& kind)
-                : _this(_this), p(p), did(did), new_single(new_single),
-                  kind(kind) {}
-
-            EGFRDSimulator* _this;
-            particle_id_pair const& p;
-            domain_id_type const& did;
-            single_type*& new_single;
-            domain_kind& kind;
-        };
-
-        molecule_info_type const species((*base_type::world_).get_molecule_info(p.second.species()));
-        // molecule_info_type const& species((*base_type::world_).find_molecule_info(p.second.species()));
-        dynamic_cast<particle_simulation_structure_type const&>(*(*base_type::world_).get_structure(species.structure_id)).accept(factory(this, p, did, new_single, kind));
-        boost::shared_ptr<domain_type> const retval(new_single);
-        domains_.insert(std::make_pair(did, retval));
-        BOOST_ASSERT(kind != NONE);
+        domains_.insert(std::make_pair(did, new_single));
         ++domain_count_per_type_[kind];
-        return boost::dynamic_pointer_cast<single_type>(retval);
+        return new_single;
     }
     // }}}
 
     // create_pair {{{
-    boost::shared_ptr<pair_type> create_pair(particle_id_pair const& p0,
-                                             particle_id_pair const& p1,
-                                             position_type const& com,
-                                             position_type const& iv,
-                                             length_type shell_size)
+    // boost::shared_ptr<pair_type> create_pair(particle_id_pair const& p0,
+    //                                          particle_id_pair const& p1,
+    //                                          position_type const& com,
+    //                                          position_type const& iv,
+    //                                          length_type shell_size)
+    // {
+
+    //     domain_kind kind(NONE);
+    //     pair_type* new_pair(0);
+    //     domain_id_type did(didgen_());
+
+    //     struct factory: ImmutativeStructureVisitor<typename world_type::traits_type>
+    //     {
+    //         // virtual void operator()(spherical_surface_type const& structure) const
+    //         // {
+    //         //     throw not_implemented(
+    //         //         (boost::format("unsupported structure type: %s") %
+    //         //             boost::lexical_cast<std::string>(structure)).str());
+    //         // }
+
+    //         // virtual void operator()(cylindrical_surface_type const& structure) const
+    //         // {
+    //         //     // The radius of a rod is not more than it has to be (namely
+    //         //     // the radius of the biggest particle), so if the particle
+    //         //     // undergoes an unbinding reaction we still have to clear the
+    //         //     // target volume and the move may be rejected (NoSpace error).
+    //         //     cylindrical_shell_id_pair const new_shell(
+    //         //         _this->new_shell(did, typename cylindrical_shell_type::shape_type(
+    //         //             com,
+    //         //             shell_size,
+    //         //             shape(structure).unit_z(),
+    //         //             std::max(p0.second.radius(), p1.second.radius()))));
+    //         //     new_pair = new cylindrical_pair_type(did, p0, p1, new_shell,
+    //         //                                          iv, rules);
+    //         //     kind = CYLINDRICAL_PAIR;
+    //         // }
+
+    //         // virtual void operator()(planar_surface_type const& structure) const
+    //         // {
+    //         //     cylindrical_shell_id_pair const new_shell(
+    //         //         _this->new_shell(did, typename cylindrical_shell_type::shape_type(
+    //         //             com,
+    //         //             shell_size,
+    //         //             normalize(cross_product(
+    //         //                 shape(structure).unit_x(),
+    //         //                 shape(structure).unit_y())),
+    //         //             std::max(p0.second.radius(), p1.second.radius()))));
+    //         //     new_pair = new cylindrical_pair_type(did, p0, p1, new_shell,
+    //         //                                            iv, rules);
+    //         //     kind = CYLINDRICAL_PAIR;
+    //         // }
+
+    //         virtual void operator()(cuboidal_region_type const& structure) const
+    //         {
+    //             spherical_shell_id_pair new_shell(
+    //                 _this->new_shell(did,
+    //                     typename spherical_shell_type::shape_type(com, shell_size)));
+    //             new_pair = new spherical_pair_type(did, p0, p1, new_shell,
+    //                                                iv, rules);
+    //             kind = SPHERICAL_PAIR;
+    //         }
+
+    //         factory(EGFRDSimulator* _this, particle_id_pair const& p0,
+    //                 particle_id_pair const& p1, position_type const& com,
+    //                 position_type const& iv, length_type shell_size,
+    //                 domain_id_type const& did, pair_type*& new_pair,
+    //                 domain_kind& kind)
+    //             : _this(_this), p0(p0), p1(p1), com(com), iv(iv),
+    //               shell_size(shell_size), did(did),
+    //               rules((*_this->network_rules_).query_reaction_rule(
+    //                     p0.second.species(), p1.second.species())),
+    //               new_pair(new_pair), kind(kind) {}
+
+    //         EGFRDSimulator* _this;
+    //         particle_id_pair const& p0;
+    //         particle_id_pair const& p1;
+    //         position_type const& com;
+    //         position_type const& iv;
+    //         const length_type shell_size;
+    //         domain_id_type const& did;
+    //         typename network_rules_type::reaction_rule_vector const& rules;
+    //         pair_type*& new_pair;
+    //         domain_kind& kind;
+    //     };
+
+    //     molecule_info_type const species((*base_type::world_).get_molecule_info(p0.second.species()));
+    //     // molecule_info_type const& species((*base_type::world_).find_molecule_info(p0.second.species()));
+    //     dynamic_cast<particle_simulation_structure_type&>(*(*base_type::world_).get_structure(species.structure_id)).accept(factory(this, p0, p1, com, iv, shell_size, did, new_pair, kind));
+
+    //     boost::shared_ptr<domain_type> const retval(new_pair);
+    //     domains_.insert(std::make_pair(did, retval));
+    //     BOOST_ASSERT(kind != NONE);
+    //     ++domain_count_per_type_[kind];
+    //     return boost::dynamic_pointer_cast<pair_type>(retval);
+    // }
+
+    boost::shared_ptr<spherical_pair_type> create_spherical_pair(
+        particle_id_pair const& p0, particle_id_pair const& p1,
+        position_type const& com, position_type const& iv, length_type shell_size)
     {
+        BOOST_ASSERT(
+            (*base_type::world_).get_molecule_info(p0.second.species()).structure_id == "world");
+        BOOST_ASSERT(
+            (*base_type::world_).get_molecule_info(p1.second.species()).structure_id == "world");
 
-        domain_kind kind(NONE);
-        pair_type* new_pair(0);
-        domain_id_type did(didgen_());
+        domain_id_type const did(didgen_());
+        spherical_shell_id_pair const shell(
+            new_shell(did,
+                typename spherical_shell_type::shape_type(com, shell_size)));
 
-        struct factory: ImmutativeStructureVisitor<typename world_type::traits_type>
-        {
-            // virtual void operator()(spherical_surface_type const& structure) const
-            // {
-            //     throw not_implemented(
-            //         (boost::format("unsupported structure type: %s") %
-            //             boost::lexical_cast<std::string>(structure)).str());
-            // }
+        boost::shared_ptr<spherical_pair_type> new_pair(
+            new spherical_pair_type(
+                did, p0, p1, shell, iv,
+                (*base_type::network_rules_).query_reaction_rule(
+                    p0.second.species(), p1.second.species())));
+        domain_kind const kind = SPHERICAL_PAIR;
 
-            // virtual void operator()(cylindrical_surface_type const& structure) const
-            // {
-            //     // The radius of a rod is not more than it has to be (namely
-            //     // the radius of the biggest particle), so if the particle
-            //     // undergoes an unbinding reaction we still have to clear the
-            //     // target volume and the move may be rejected (NoSpace error).
-            //     cylindrical_shell_id_pair const new_shell(
-            //         _this->new_shell(did, typename cylindrical_shell_type::shape_type(
-            //             com,
-            //             shell_size,
-            //             shape(structure).unit_z(),
-            //             std::max(p0.second.radius(), p1.second.radius()))));
-            //     new_pair = new cylindrical_pair_type(did, p0, p1, new_shell,
-            //                                          iv, rules);
-            //     kind = CYLINDRICAL_PAIR;
-            // }
-
-        
-            // virtual void operator()(planar_surface_type const& structure) const
-            // {
-            //     cylindrical_shell_id_pair const new_shell(
-            //         _this->new_shell(did, typename cylindrical_shell_type::shape_type(
-            //             com,
-            //             shell_size,
-            //             normalize(cross_product(
-            //                 shape(structure).unit_x(),
-            //                 shape(structure).unit_y())),
-            //             std::max(p0.second.radius(), p1.second.radius()))));
-            //     new_pair = new cylindrical_pair_type(did, p0, p1, new_shell,
-            //                                            iv, rules);
-            //     kind = CYLINDRICAL_PAIR;
-            // }
-
-            virtual void operator()(cuboidal_region_type const& structure) const
-            {
-                spherical_shell_id_pair new_shell(
-                    _this->new_shell(did,
-                        typename spherical_shell_type::shape_type(com, shell_size)));
-                new_pair = new spherical_pair_type(did, p0, p1, new_shell,
-                                                   iv, rules);
-                kind = SPHERICAL_PAIR;
-            }
-
-            factory(EGFRDSimulator* _this, particle_id_pair const& p0,
-                    particle_id_pair const& p1, position_type const& com,
-                    position_type const& iv, length_type shell_size,
-                    domain_id_type const& did, pair_type*& new_pair,
-                    domain_kind& kind)
-                : _this(_this), p0(p0), p1(p1), com(com), iv(iv),
-                  shell_size(shell_size), did(did),
-                  rules((*_this->network_rules_).query_reaction_rule(
-                        p0.second.species(), p1.second.species())),
-                  new_pair(new_pair), kind(kind) {}
-
-            EGFRDSimulator* _this;
-            particle_id_pair const& p0;
-            particle_id_pair const& p1;
-            position_type const& com;
-            position_type const& iv;
-            const length_type shell_size;
-            domain_id_type const& did;
-            typename network_rules_type::reaction_rule_vector const& rules;
-            pair_type*& new_pair;
-            domain_kind& kind;
-        };
-
-        molecule_info_type const species((*base_type::world_).get_molecule_info(p0.second.species()));
-        // molecule_info_type const& species((*base_type::world_).find_molecule_info(p0.second.species()));
-        dynamic_cast<particle_simulation_structure_type&>(*(*base_type::world_).get_structure(species.structure_id)).accept(factory(this, p0, p1, com, iv, shell_size, did, new_pair, kind));
-
-        boost::shared_ptr<domain_type> const retval(new_pair);
-        domains_.insert(std::make_pair(did, retval));
-        BOOST_ASSERT(kind != NONE);
+        domains_.insert(std::make_pair(did, new_pair));
         ++domain_count_per_type_[kind];
-        return boost::dynamic_pointer_cast<pair_type>(retval);
+        return new_pair;
     }
-
     // }}}
 
     // create_multi {{{
@@ -2127,24 +2182,24 @@ protected:
         return (*base_type::world_).apply_boundary(add(domain.particle().second.position(), displacement));
     }
 
-    position_type draw_new_position(single_type& domain, time_type dt)
-    {
-        {
-            spherical_single_type* _domain(dynamic_cast<spherical_single_type*>(&domain));
-            if (_domain)
-            {
-                return draw_new_position(*_domain, dt);
-            }
-        }
-        {
-            cylindrical_single_type* _domain(dynamic_cast<cylindrical_single_type*>(&domain));
-            if (_domain)
-            {
-                return draw_new_position(*_domain, dt);
-            }
-        }
-        throw not_implemented(std::string("unsupported domain type"));
-    }
+    // position_type draw_new_position(single_type& domain, time_type dt)
+    // {
+    //     {
+    //         spherical_single_type* _domain(dynamic_cast<spherical_single_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             return draw_new_position(*_domain, dt);
+    //         }
+    //     }
+    //     {
+    //         cylindrical_single_type* _domain(dynamic_cast<cylindrical_single_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             return draw_new_position(*_domain, dt);
+    //         }
+    //     }
+    //     throw not_implemented(std::string("unsupported domain type"));
+    // }
     // }}}
 
     template<typename Tshell>
@@ -2167,24 +2222,24 @@ protected:
         return (*base_type::world_).apply_boundary(add(domain.particle().second.position(), displacement));
     }
 
-    position_type draw_escape_position(single_type& domain)
-    {
-        {
-            spherical_single_type* _domain(dynamic_cast<spherical_single_type*>(&domain));
-            if (_domain)
-            {
-                return draw_escape_position(*_domain);
-            }
-        }
-        {
-            cylindrical_single_type* _domain(dynamic_cast<cylindrical_single_type*>(&domain));
-            if (_domain)
-            {
-                return draw_escape_position(*_domain);
-            }
-        }
-        throw not_implemented(std::string("unsupported domain type"));
-    }
+    // position_type draw_escape_position(single_type& domain)
+    // {
+    //     {
+    //         spherical_single_type* _domain(dynamic_cast<spherical_single_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             return draw_escape_position(*_domain);
+    //         }
+    //     }
+    //     {
+    //         cylindrical_single_type* _domain(dynamic_cast<cylindrical_single_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             return draw_escape_position(*_domain);
+    //         }
+    //     }
+    //     throw not_implemented(std::string("unsupported domain type"));
+    // }
 
     // draw_new_positions {{{
     template<typename Tdraw, typename T>
@@ -2213,9 +2268,10 @@ protected:
      * So whoever calls propagate_single directly should reschedule the single 
      * afterwards.
      */
-    //template<typename T>
-    //void propagate(AnalyticalSingle<traits_type, T>& domain, position_type const& new_pos)
-    void propagate(single_type& domain, position_type const& new_pos,
+    // void propagate(single_type& domain, position_type const& new_pos,
+    //                bool do_update_shell_matrix)
+    template<typename T>
+    void propagate(AnalyticalSingle<traits_type, T>& domain, position_type const& new_pos,
                    bool do_update_shell_matrix)
     {
         LOG_DEBUG(("propagate: domain=%s, new_pos=%s, do_update_shell_matrix=%d",
@@ -2272,9 +2328,13 @@ protected:
         remove_domain(domain);
 
         boost::array<boost::shared_ptr<single_type>, 2> const singles = { {
-            create_single(new_particles[0]),
-            create_single(new_particles[1]) 
+            create_single_add_escape_event(new_particles[0]),
+            create_single_add_escape_event(new_particles[1]) 
         } };
+        // boost::array<boost::shared_ptr<single_type>, 2> const singles = { {
+        //     create_single(new_particles[0]),
+        //     create_single(new_particles[1]) 
+        // } };
 
         if (log_.level() == Logger::L_DEBUG)
         {
@@ -2346,8 +2406,9 @@ protected:
         boost::array<boost::shared_ptr<single_type>, 2> const singles(
             propagate(domain, draw_new_positions<draw_on_burst>(domain, dt)));
 
-        add_event(*singles[0], SINGLE_EVENT_ESCAPE);
-        add_event(*singles[1], SINGLE_EVENT_ESCAPE);
+        //XXX: The followings are called in propagate now
+        // add_event(*singles[0], SINGLE_EVENT_ESCAPE);
+        // add_event(*singles[1], SINGLE_EVENT_ESCAPE);
 
         return singles;
     }
@@ -2356,8 +2417,9 @@ protected:
     {
         BOOST_FOREACH(particle_id_pair p, domain.get_particles_range())
         {
-            boost::shared_ptr<single_type> s(create_single(p));
-            add_event(*s, SINGLE_EVENT_ESCAPE);
+            boost::shared_ptr<single_type> s(create_single_add_escape_event(p));
+            // boost::shared_ptr<single_type> s(create_single(p));
+            // add_event(*s, SINGLE_EVENT_ESCAPE);
             if (result)
             {
                 result.get().push_back(boost::dynamic_pointer_cast<domain_type>(s));
@@ -2366,29 +2428,29 @@ protected:
         remove_domain(domain);
     }
 
-    void burst(single_type& domain)
-    {
-        LOG_DEBUG(("burst: bursting %s", boost::lexical_cast<std::string>(domain).c_str()));
-        BOOST_ASSERT(this->t() >= domain.last_time());
-        BOOST_ASSERT(this->t() <= domain.last_time() + domain.dt());
-        {
-            spherical_single_type* _domain(dynamic_cast<spherical_single_type*>(&domain));
-            if (_domain)
-            {
-                burst(*_domain);
-                return;
-            }
-        }
-        {
-            cylindrical_single_type* _domain(dynamic_cast<cylindrical_single_type*>(&domain));
-            if (_domain)
-            {
-                burst(*_domain);
-                return;
-            }
-        }
-        throw not_implemented("?");
-    }
+    // void burst(single_type& domain)
+    // {
+    //     LOG_DEBUG(("burst: bursting %s", boost::lexical_cast<std::string>(domain).c_str()));
+    //     BOOST_ASSERT(this->t() >= domain.last_time());
+    //     BOOST_ASSERT(this->t() <= domain.last_time() + domain.dt());
+    //     {
+    //         spherical_single_type* _domain(dynamic_cast<spherical_single_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             burst(*_domain);
+    //             return;
+    //         }
+    //     }
+    //     {
+    //         cylindrical_single_type* _domain(dynamic_cast<cylindrical_single_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             burst(*_domain);
+    //             return;
+    //         }
+    //     }
+    //     throw not_implemented("?");
+    // }
 
     /*
      * void burst(domain_type* domain) is almost same as below.
@@ -2560,8 +2622,10 @@ protected:
                 particle_id_pair product(
                     (*base_type::world_).new_particle(
                         product_id0, reactant.second.position()).first);
-                boost::shared_ptr<single_type> new_domain(create_single(product));
-                add_event(*new_domain, SINGLE_EVENT_ESCAPE);
+                boost::shared_ptr<single_type> new_domain(
+                    create_single_add_escape_event(product));
+                // boost::shared_ptr<single_type> new_domain(create_single(product));
+                // add_event(*new_domain, SINGLE_EVENT_ESCAPE);
                 if (base_type::rrec_)
                 {
                     // (*base_type::rrec_)(reaction_record_type(
@@ -2658,8 +2722,10 @@ protected:
                 };
                 // create domains for two particles and add them to
                 // the event queue
-                add_event(*create_single(pp[0]), SINGLE_EVENT_ESCAPE);
-                add_event(*create_single(pp[1]), SINGLE_EVENT_ESCAPE);
+                create_single_add_escape_event(pp[0]);
+                create_single_add_escape_event(pp[1]);
+                // add_event(*create_single(pp[0]), SINGLE_EVENT_ESCAPE);
+                // add_event(*create_single(pp[1]), SINGLE_EVENT_ESCAPE);
 
                 if (base_type::rrec_)
                 {
@@ -2795,28 +2861,28 @@ protected:
         add_event(domain, event_kind);
     }
 
-    void determine_next_event(single_type& domain)
-    {
-        {
-            spherical_single_type* _domain(
-                dynamic_cast<spherical_single_type*>(&domain));
-            if (_domain)
-            {
-                determine_next_event(*_domain);
-                return;
-            }
-        }
-        {
-            cylindrical_single_type* _domain(
-                dynamic_cast<cylindrical_single_type*>(&domain));
-            if (_domain)
-            {
-                determine_next_event(*_domain);
-                return;
-            }
-        }
-        throw not_implemented("unsupported domain type");
-    }
+    // void determine_next_event(single_type& domain)
+    // {
+    //     {
+    //         spherical_single_type* _domain(
+    //             dynamic_cast<spherical_single_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             determine_next_event(*_domain);
+    //             return;
+    //         }
+    //     }
+    //     {
+    //         cylindrical_single_type* _domain(
+    //             dynamic_cast<cylindrical_single_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             determine_next_event(*_domain);
+    //             return;
+    //         }
+    //     }
+    //     throw not_implemented("unsupported domain type");
+    // }
 
     template<typename Tshell>
     void determine_next_event(AnalyticalPair<traits_type, Tshell>& domain)
@@ -2831,28 +2897,28 @@ protected:
         add_event(domain, dt_and_event_pair.second);
     }
 
-    void determine_next_event(pair_type& domain)
-    {
-        {
-            spherical_pair_type* _domain(
-                dynamic_cast<spherical_pair_type*>(&domain));
-            if (_domain)
-            {
-                determine_next_event(*_domain);
-                return;
-            }
-        }
-        {
-            cylindrical_pair_type* _domain(
-                dynamic_cast<cylindrical_pair_type*>(&domain));
-            if (_domain)
-            {
-                determine_next_event(*_domain);
-                return;
-            }
-        }
-        throw not_implemented("unsupported domain type");
-    }
+    // void determine_next_event(pair_type& domain)
+    // {
+    //     {
+    //         spherical_pair_type* _domain(
+    //             dynamic_cast<spherical_pair_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             determine_next_event(*_domain);
+    //             return;
+    //         }
+    //     }
+    //     {
+    //         cylindrical_pair_type* _domain(
+    //             dynamic_cast<cylindrical_pair_type*>(&domain));
+    //         if (_domain)
+    //         {
+    //             determine_next_event(*_domain);
+    //             return;
+    //         }
+    //     }
+    //     throw not_implemented("unsupported domain type");
+    // }
     // }}}
 
     // get_intruders {{{ 
@@ -2884,11 +2950,62 @@ protected:
         return col.closest;
     }
 
-    void restore_domain(single_type& domain)
+    void restore_domain_remove_event_determine_next_event(single_type& domain)
+    {
+        if (spherical_single_type* _domain = dynamic_cast<spherical_single_type*>(&domain))
+        {
+            return restore_domain_remove_event_determine_next_event(*_domain);
+        }
+        if (cylindrical_single_type* _domain = dynamic_cast<cylindrical_single_type*>(&domain))
+        {
+            return restore_domain_remove_event_determine_next_event(*_domain);
+        }
+        throw not_implemented(std::string("unsupported domain type"));
+    }
+
+    template<typename T>
+    void restore_domain_remove_event_determine_next_event(
+        AnalyticalSingle<traits_type, T>& domain)
     {
         std::pair<domain_id_type, length_type> const closest(
             get_closest_domain(
-                domain.position(), 
+                domain.position(),
+                array_gen(domain.id())));
+
+        restore_domain(domain, closest);
+        remove_event(domain);
+        determine_next_event(domain);
+    }
+
+    // void restore_domain(single_type& domain)
+    // {
+    //     std::pair<domain_id_type, length_type> const closest(
+    //         get_closest_domain(
+    //             domain.position(), 
+    //             array_gen(domain.id())));
+    //     restore_domain(domain, closest);
+    // }
+
+    // void restore_domain(single_type& domain,
+    //                     std::pair<domain_id_type, length_type> const& closest)
+    // {
+    //     if (spherical_single_type* _domain = dynamic_cast<spherical_single_type*>(&domain))
+    //     {
+    //         return restore_domain(*_domain, closest);
+    //     }
+    //     if (cylindrical_single_type* _domain = dynamic_cast<cylindrical_single_type*>(&domain))
+    //     {
+    //         return restore_domain(*_domain, closest);
+    //     }
+    //     throw not_implemented(std::string("unsupported domain type"));
+    // }
+
+    template<typename T>
+    void restore_domain(AnalyticalSingle<traits_type, T>& domain)
+    {
+        std::pair<domain_id_type, length_type> const closest(
+            get_closest_domain(
+                domain.position(),
                 array_gen(domain.id())));
         restore_domain(domain, closest);
     }
@@ -2943,24 +3060,6 @@ protected:
         domain.size() = new_shell_size;
         update_shell_matrix(domain);
         BOOST_ASSERT(domain.size() == new_shell_size);
-    }
-
-    void restore_domain(single_type& domain,
-                        std::pair<domain_id_type, length_type> const& closest)
-    {
-        {
-            spherical_single_type *_domain(
-                dynamic_cast<spherical_single_type*>(&domain));
-            if (_domain)
-                return restore_domain(*_domain, closest);
-        }
-        {
-            cylindrical_single_type *_domain(
-                dynamic_cast<cylindrical_single_type*>(&domain));
-            if (_domain)
-                return restore_domain(*_domain, closest);
-        }
-        throw not_implemented(std::string("unsupported domain type"));
     }
 
     template<typename Trange>
@@ -3064,6 +3163,15 @@ protected:
         LOG_DEBUG(("trying to form Pair(%s, %s)",
                     boost::lexical_cast<std::string>(domain).c_str(),
                     boost::lexical_cast<std::string>(possible_partner).c_str()));
+
+        return boost::optional<pair_type&>(
+            form_spherical_pair(domain, possible_partner, neighbors));
+    }
+
+    boost::optional<spherical_pair_type&>
+    form_spherical_pair(single_type& domain, single_type& possible_partner,
+              std::vector<boost::shared_ptr<domain_type> > const& neighbors)
+    {
         // 1. Determine min shell size.
         length_type const r[] = {
             domain.particle().second.radius(),
@@ -3125,7 +3233,7 @@ protected:
                        boost::lexical_cast<std::string>(domain).c_str(),
                        boost::lexical_cast<std::string>(possible_partner).c_str(),
                        min_shell_size_with_margin, max_shell_size));
-            return boost::optional<pair_type&>();
+            return boost::optional<spherical_pair_type&>();
         }
 
         // 3. Check if bursted Singles not too close.
@@ -3165,7 +3273,7 @@ protected:
                            boost::lexical_cast<std::string>(domain).c_str(),
                            boost::lexical_cast<std::string>(possible_partner).c_str(),
                            boost::lexical_cast<std::string>(*closest_domain).c_str()));
-                return boost::optional<pair_type&>();
+                return boost::optional<spherical_pair_type&>();
             }
         }
 
@@ -3237,7 +3345,7 @@ protected:
                     boost::lexical_cast<std::string>(possible_partner).c_str(),
                     closest_domain ? ": squeezed by ": "",
                     closest_domain ? boost::lexical_cast<std::string>(*closest_domain).c_str(): ""));
-                return boost::optional<pair_type&>();
+                return boost::optional<spherical_pair_type&>();
             }
         }
 
@@ -3257,15 +3365,15 @@ protected:
                 LOG_DEBUG(("Pair(%s, %s) not formed: leaving singles are better",
                             boost::lexical_cast<std::string>(domain).c_str(),
                             boost::lexical_cast<std::string>(possible_partner).c_str()));
-                return boost::optional<pair_type&>();
+                return boost::optional<spherical_pair_type&>();
             }
         }
 
         // 6. Ok, Pair makes sense. Create one.
         new_shell_size = std::min(new_shell_size, max_shell_size);
 
-        boost::shared_ptr<pair_type> new_pair(
-            create_pair(
+        boost::shared_ptr<spherical_pair_type> new_pair(
+            create_spherical_pair(
                 domain.particle(),
                 possible_partner.particle(),
                 com, iv, new_shell_size));
@@ -3506,12 +3614,13 @@ protected:
         return boost::optional<domain_type&>();
     }
 
-    template <typename Tdomain_>
-    void fire_event(domain_event<Tdomain_, single_event_kind> const& event)
+    template <typename Tshell>
+    void fire_event(
+        domain_event<AnalyticalSingle<traits_type, Tshell>, single_event_kind> const& event)
     {
-        typedef domain_event<Tdomain_, single_event_kind> single_event;
+        typedef domain_event<AnalyticalSingle<traits_type, Tshell>, single_event_kind> single_event;
 
-        single_type& domain(event.domain());
+        typename single_event::domain_type& domain(event.domain());
 #if 0
         BOOST_ASSERT(
             std::abs(domain.dt() + domain.last_time() - this->t())
@@ -3520,9 +3629,16 @@ protected:
         ++single_step_count_[event.kind()];
         switch (event.kind())
         {
-        default: /* never get here */ BOOST_ASSERT(0); break;
+        default:
+            /* never get here */
+            BOOST_ASSERT(0);
+            break;
+
         case SINGLE_EVENT_REACTION:
-            LOG_DEBUG(("fire_single: single reaction (%s)", boost::lexical_cast<std::string>(domain).c_str()));
+            LOG_DEBUG((
+                "fire_single: single reaction (%s)",
+                boost::lexical_cast<std::string>(domain).c_str()));
+
             propagate(domain, draw_new_position(domain, domain.dt()), false);
             try
             {
@@ -3539,7 +3655,9 @@ protected:
             break;
 
         case SINGLE_EVENT_ESCAPE:
-            LOG_DEBUG(("fire_single: single escape (%s)", boost::lexical_cast<std::string>(domain).c_str()));
+            LOG_DEBUG((
+                "fire_single: single escape (%s)",
+                boost::lexical_cast<std::string>(domain).c_str()));
 
             // handle immobile case
             if (domain.D() == 0.)
@@ -3550,10 +3668,15 @@ protected:
             }
 
             if (domain.dt() != 0.)
+            {
                 // Heads up: shell matrix will be updated later in restore_domain().
                 // propagate(domain, draw_new_position(domain, domain.dt()), false);
                 propagate(domain, draw_escape_position(domain), false);
-            length_type const min_shell_radius(domain.particle().second.radius() * (1. + single_shell_factor_));
+            }
+
+            length_type const min_shell_radius(
+                domain.particle().second.radius() * (1. + single_shell_factor_));
+
             {
                 std::vector<domain_id_type>* intruders;
                 std::pair<domain_id_type, length_type> closest;
@@ -3594,15 +3717,21 @@ protected:
                             boost::dynamic_pointer_cast<single_type>(_single));
                         if (!single)
                             continue;
-                        restore_domain(*single);
-                        // reschedule events for the restored domains
-                        remove_event(*single);
-                        determine_next_event(*single);
+
+                        restore_domain_remove_event_determine_next_event(*single);
+                        // restore_domain(*single);
+                        // // reschedule events for the restored domains
+                        // remove_event(*single);
+                        // determine_next_event(*single);
                     }
-                } else {
+                }
+                else
+                {
                     restore_domain(domain, closest);
                 }
+
                 determine_next_event(domain);
+
                 LOG_DEBUG(("%s (dt=%.16g)",
                     boost::lexical_cast<std::string>(domain).c_str(),
                     domain.dt()));
@@ -3699,8 +3828,9 @@ protected:
                 boost::array<boost::shared_ptr<single_type>, 2> const new_single(
                     propagate(domain, new_pos));
 
-                add_event(*new_single[0], SINGLE_EVENT_ESCAPE);
-                add_event(*new_single[1], SINGLE_EVENT_ESCAPE);
+                //XXX: The followings are called in propagate now
+                // add_event(*new_single[0], SINGLE_EVENT_ESCAPE);
+                // add_event(*new_single[1], SINGLE_EVENT_ESCAPE);
             }
             break;
         
@@ -3752,9 +3882,12 @@ protected:
                         particle_id_pair const new_particle(
                             (*base_type::world_).new_particle(
                                 new_species_id, new_com).first);
+
                         boost::shared_ptr<single_type> new_single(
-                            create_single(new_particle));
-                        add_event(*new_single, SINGLE_EVENT_ESCAPE);
+                            create_single_add_escape_event(new_particle));
+                        // boost::shared_ptr<single_type> new_single(
+                        //     create_single(new_particle));
+                        // add_event(*new_single, SINGLE_EVENT_ESCAPE);
 
                         if (base_type::rrec_)
                         {
@@ -3787,8 +3920,9 @@ protected:
                 boost::array<boost::shared_ptr<single_type>, 2> const new_single(
                     propagate(domain, new_pos));
 
-                add_event(*new_single[0], SINGLE_EVENT_ESCAPE);
-                add_event(*new_single[1], SINGLE_EVENT_ESCAPE);
+                //XXX: The followings are called in propagate now
+                // add_event(*new_single[0], SINGLE_EVENT_ESCAPE);
+                // add_event(*new_single[1], SINGLE_EVENT_ESCAPE);
             }
             break;
         }
@@ -3854,8 +3988,10 @@ protected:
                     reaction_record_type(rr.id(), array_gen(pp)));
             }
 
-            boost::shared_ptr<single_type> single(create_single(pp));
-            add_event(*single, SINGLE_EVENT_ESCAPE);
+            boost::shared_ptr<single_type> single(
+                create_single_add_escape_event(pp));
+            // boost::shared_ptr<single_type> single(create_single(pp));
+            // add_event(*single, SINGLE_EVENT_ESCAPE);
         }
         catch (no_space const&)
         {
