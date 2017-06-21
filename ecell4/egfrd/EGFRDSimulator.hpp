@@ -270,7 +270,6 @@ public:
     typedef std::pair<const shell_id_type, spherical_shell_type> spherical_shell_id_pair;
     typedef std::pair<const shell_id_type, cylindrical_shell_type> cylindrical_shell_id_pair;
 
-
     typedef typename world_type::traits_type::particle_simulation_structure_type
         particle_simulation_structure_type;
     // typedef typename world_type::traits_type::spherical_surface_type
@@ -283,9 +282,10 @@ public:
     typedef typename ReactionRecorderWrapper<reaction_record_type>::reaction_info_type reaction_info_type;
 
     typedef Single<traits_type> single_type;
-    typedef Pair<traits_type> pair_type;
-    typedef Multi<EGFRDSimulator> multi_type;
     typedef ShapedDomain<traits_type> shaped_domain_type;
+    typedef Pair<traits_type> pair_type;
+
+    typedef Multi<EGFRDSimulator> multi_type;
     typedef AnalyticalSingle<traits_type, spherical_shell_type> spherical_single_type;
     typedef AnalyticalSingle<traits_type, cylindrical_shell_type> cylindrical_single_type;
     typedef AnalyticalPair<traits_type, spherical_shell_type> spherical_pair_type;
@@ -401,8 +401,12 @@ protected:
         event_kind_type kind_;
     };
 
-    typedef domain_event<single_type, single_event_kind> single_event;
-    typedef domain_event<pair_type, pair_event_kind> pair_event;
+    // typedef domain_event<single_type, single_event_kind> single_event;
+    // typedef domain_event<pair_type, pair_event_kind> pair_event;
+    typedef domain_event<spherical_single_type, single_event_kind> spherical_single_event;
+    typedef domain_event<cylindrical_single_type, single_event_kind> cylindrical_single_event;
+    typedef domain_event<spherical_pair_type, pair_event_kind> spherical_pair_event;
+    typedef domain_event<cylindrical_pair_type, pair_event_kind> cylindrical_pair_event;
 
     class multi_event: public domain_event_base
     {
@@ -1267,37 +1271,52 @@ public:
     {
         std::vector<domain_id_type> non_singles;
 
-        // first burst all Singles.
         BOOST_FOREACH (event_id_pair_type const& event, scheduler_.events())
         {
+            if (domain_event_base const* domain_ev = dynamic_cast<domain_event_base const*>(event.second.get()))
             {
-                single_event const* single_ev(
-                        dynamic_cast<single_event const*>(event.second.get()));
-                if (single_ev)
-                {
-                    burst(single_ev->domain());
-                    continue;
-                }
+                burst(&(domain_ev->domain()));
+                continue;
             }
+            if (birth_event const* birth_ev = dynamic_cast<birth_event const*>(event.second.get()))
             {
-                birth_event const* birth_ev(
-                        dynamic_cast<birth_event const*>(event.second.get()));
-                if (birth_ev)
-                {
-                    continue;
-                }
+                continue;
             }
-            {
-                domain_event_base const* domain_ev(
-                    dynamic_cast<domain_event_base const*>(event.second.get()));
-                BOOST_ASSERT(domain_ev);
-                non_singles.push_back(domain_ev->domain().id());
-                // continue;
-            }
+            throw not_implemented("?");
         }
 
-        // then burst all Pairs and Multis.
-        burst_domains(non_singles);
+        //XXX: Do singles really need to be bursted before pairs and multis?
+        // // first burst all Singles.
+        // BOOST_FOREACH (event_id_pair_type const& event, scheduler_.events())
+        // {
+        //     {
+        //         single_event const* single_ev(
+        //                 dynamic_cast<single_event const*>(event.second.get()));
+        //         if (single_ev)
+        //         {
+        //             burst(single_ev->domain());
+        //             continue;
+        //         }
+        //     }
+        //     {
+        //         birth_event const* birth_ev(
+        //                 dynamic_cast<birth_event const*>(event.second.get()));
+        //         if (birth_ev)
+        //         {
+        //             continue;
+        //         }
+        //     }
+        //     {
+        //         domain_event_base const* domain_ev(
+        //             dynamic_cast<domain_event_base const*>(event.second.get()));
+        //         BOOST_ASSERT(domain_ev);
+        //         non_singles.push_back(domain_ev->domain().id());
+        //         // continue;
+        //     }
+        // }
+
+        // // then burst all Pairs and Multis.
+        // burst_domains(non_singles);
 
         base_type::dt_ = 0.;
     }
@@ -1683,27 +1702,81 @@ protected:
     }
     // }}}
 
+    void add_event(spherical_single_type& domain, single_event_kind const& kind)
+    {
+        if (base_type::paranoiac_)
+            BOOST_ASSERT(domains_.find(domain.id()) != domains_.end());
+        boost::shared_ptr<event_type> new_event(
+            new spherical_single_event(this->t() + domain.dt(), domain, kind));
+        domain.event() = std::make_pair(scheduler_.add(new_event), new_event);
+        LOG_DEBUG(("add_event: #%d - %s", domain.event().first, boost::lexical_cast<std::string>(domain).c_str()));
+    }
+
+    void add_event(cylindrical_single_type& domain, single_event_kind const& kind)
+    {
+        if (base_type::paranoiac_)
+            BOOST_ASSERT(domains_.find(domain.id()) != domains_.end());
+        boost::shared_ptr<event_type> new_event(
+            new cylindrical_single_event(this->t() + domain.dt(), domain, kind));
+        domain.event() = std::make_pair(scheduler_.add(new_event), new_event);
+        LOG_DEBUG(("add_event: #%d - %s", domain.event().first, boost::lexical_cast<std::string>(domain).c_str()));
+    }
+
     void add_event(single_type& domain, single_event_kind const& kind)
     {
-        if (base_type::paranoiac_)
-            BOOST_ASSERT(domains_.find(domain.id()) != domains_.end());
+        if (spherical_single_type* domain_ = dynamic_cast<spherical_single_type*>(&domain))
+        {
+            add_event(*domain_, kind);
+            return;
+        }
 
-        boost::shared_ptr<event_type> new_event(
-            new single_event(this->t() + domain.dt(), domain, kind));
-        domain.event() = std::make_pair(scheduler_.add(new_event), new_event);
-        LOG_DEBUG(("add_event: #%d - %s", domain.event().first, boost::lexical_cast<std::string>(domain).c_str()));
+        if (cylindrical_single_type* domain_ = dynamic_cast<cylindrical_single_type*>(&domain))
+        {
+            add_event(*domain_, kind);
+            return;
+        }
+
+        throw not_implemented("?");
     }
 
-    void add_event(pair_type& domain, pair_event_kind const& kind)
+    // void add_event(spherical_pair_type& domain, pair_event_kind const& kind)
+    // {
+    //     if (base_type::paranoiac_)
+    //         BOOST_ASSERT(domains_.find(domain.id()) != domains_.end());
+
+    //     boost::shared_ptr<event_type> new_event(
+    //         new spherical_pair_event(this->t() + domain.dt(), domain, kind));
+    //     domain.event() = std::make_pair(scheduler_.add(new_event), new_event);
+    //     LOG_DEBUG(("add_event: #%d - %s", domain.event().first, boost::lexical_cast<std::string>(domain).c_str()));
+    // }
+
+    void add_event(cylindrical_pair_type& domain, pair_event_kind const& kind)
     {
         if (base_type::paranoiac_)
             BOOST_ASSERT(domains_.find(domain.id()) != domains_.end());
 
         boost::shared_ptr<event_type> new_event(
-            new pair_event(this->t() + domain.dt(), domain, kind));
+            new cylindrical_pair_event(this->t() + domain.dt(), domain, kind));
         domain.event() = std::make_pair(scheduler_.add(new_event), new_event);
         LOG_DEBUG(("add_event: #%d - %s", domain.event().first, boost::lexical_cast<std::string>(domain).c_str()));
     }
+
+    // void add_event(pair_type& domain, pair_event_kind const& kind)
+    // {
+    //     if (spherical_pair_type* domain_ = dynamic_cast<spherical_pair_type*>(&domain))
+    //     {
+    //         add_event(*domain_, kind);
+    //         return;
+    //     }
+
+    //     if (cylindrical_pair_type* domain_ = dynamic_cast<cylindrical_pair_type*>(&domain))
+    //     {
+    //         add_event(*domain_, kind);
+    //         return;
+    //     }
+
+    //     throw not_implemented("?");
+    // }
 
     void add_event(multi_type& domain)
     {
@@ -1830,6 +1903,7 @@ protected:
                                              position_type const& iv,
                                              length_type shell_size)
     {
+
         domain_kind kind(NONE);
         pair_type* new_pair(0);
         domain_id_type did(didgen_());
@@ -1919,6 +1993,7 @@ protected:
         ++domain_count_per_type_[kind];
         return boost::dynamic_pointer_cast<pair_type>(retval);
     }
+
     // }}}
 
     // create_multi {{{
@@ -2312,6 +2387,61 @@ protected:
                 return;
             }
         }
+        throw not_implemented("?");
+    }
+
+    /*
+     * void burst(domain_type* domain) is almost same as below.
+     */
+    void burst(domain_type* domain)
+    {
+        LOG_DEBUG(("burst: bursting %s", boost::lexical_cast<std::string>(*domain).c_str()));
+
+        if (spherical_single_type* _domain = dynamic_cast<spherical_single_type*>(domain))
+        {
+            burst(*_domain);
+            // if (result)
+            //     result.get().push_back(domain);
+            return;
+        }
+
+        if (cylindrical_single_type* _domain = dynamic_cast<cylindrical_single_type*>(domain))
+        {
+            burst(*_domain);
+            // if (result)
+            //     result.get().push_back(domain);
+            return;
+        }
+
+        if (spherical_pair_type* _domain = dynamic_cast<spherical_pair_type*>(domain))
+        {
+            boost::array<boost::shared_ptr<single_type>, 2> bursted(burst(*_domain));
+            // if (result)
+            // {
+            //     result.get().push_back(boost::dynamic_pointer_cast<domain_type>(bursted[0]));
+            //     result.get().push_back(boost::dynamic_pointer_cast<domain_type>(bursted[1]));
+            // }
+            return;
+        }
+
+        if (cylindrical_pair_type* _domain = dynamic_cast<cylindrical_pair_type*>(domain))
+        {
+            boost::array<boost::shared_ptr<single_type>, 2> bursted(burst(*_domain));
+            // if (result)
+            // {
+            //     result.get().push_back(boost::dynamic_pointer_cast<domain_type>(bursted[0]));
+            //     result.get().push_back(boost::dynamic_pointer_cast<domain_type>(bursted[1]));
+            // }
+            return;
+        }
+
+        if (multi_type* _domain = dynamic_cast<multi_type*>(domain))
+        {
+            // burst(*_domain, result);
+            burst(*_domain);
+            return;
+        }
+
         throw not_implemented("?");
     }
 
@@ -3352,7 +3482,7 @@ protected:
                     dynamic_cast<single_type*>(possible_partner));
             if (_possible_partner)
             {
-                boost::optional<pair_type&> new_pair(
+                boost::optional<domain_type&> new_pair(
                     form_pair(domain, *_possible_partner, neighbors));
                 if (new_pair)
                 {
@@ -3375,9 +3505,12 @@ protected:
         }
         return boost::optional<domain_type&>();
     }
-  
-    void fire_event(single_event const& event)
+
+    template <typename Tdomain_>
+    void fire_event(domain_event<Tdomain_, single_event_kind> const& event)
     {
+        typedef domain_event<Tdomain_, single_event_kind> single_event;
+
         single_type& domain(event.domain());
 #if 0
         BOOST_ASSERT(
@@ -3493,24 +3626,14 @@ protected:
         return gf.drawEventType(rnd, domain.dt());
     }
 
-    void fire_event(pair_event const& event)
+    void fire_event(spherical_pair_event const& event)
     {
-        {
-            spherical_pair_type* _domain(dynamic_cast<spherical_pair_type*>(&event.domain()));
-            if (_domain)
-            {
-                fire_event(*_domain, event.kind());
-                return;
-            }
-        }
-        {
-            cylindrical_pair_type* _domain(dynamic_cast<cylindrical_pair_type*>(&event.domain()));
-            if (_domain)
-            {
-                fire_event(*_domain, event.kind());
-                return;
-            }
-        }
+        fire_event(event.domain(), event.kind());
+    }
+
+    void fire_event(cylindrical_pair_event const& event)
+    {
+        fire_event(event.domain(), event.kind());
     }
 
     template<typename T>
@@ -3746,7 +3869,7 @@ protected:
     void fire_event(event_type& event)
     {
         {
-            single_event* _event(dynamic_cast<single_event*>(&event));
+            spherical_single_event* _event(dynamic_cast<spherical_single_event*>(&event));
             if (_event)
             {
                 fire_event(*_event);
@@ -3754,7 +3877,23 @@ protected:
             }
         }
         {
-            pair_event* _event(dynamic_cast<pair_event*>(&event));
+            cylindrical_single_event* _event(dynamic_cast<cylindrical_single_event*>(&event));
+            if (_event)
+            {
+                fire_event(*_event);
+                return;
+            }
+        }
+        {
+            spherical_pair_event* _event(dynamic_cast<spherical_pair_event*>(&event));
+            if (_event)
+            {
+                fire_event(*_event);
+                return;
+            }
+        }
+        {
+            cylindrical_pair_event* _event(dynamic_cast<cylindrical_pair_event*>(&event));
             if (_event)
             {
                 fire_event(*_event);
@@ -3901,14 +4040,28 @@ protected:
     static std::string stringize_event(event_type const& ev)
     {
         {
-            single_event const* _ev(dynamic_cast<single_event const*>(&ev));
+            spherical_single_event const* _ev(dynamic_cast<spherical_single_event const*>(&ev));
             if (_ev)
             {
                 return stringize_event(*_ev);
             }
         }
         {
-            pair_event const* _ev(dynamic_cast<pair_event const*>(&ev));
+            cylindrical_single_event const* _ev(dynamic_cast<cylindrical_single_event const*>(&ev));
+            if (_ev)
+            {
+                return stringize_event(*_ev);
+            }
+        }
+        {
+            spherical_pair_event const* _ev(dynamic_cast<spherical_pair_event const*>(&ev));
+            if (_ev)
+            {
+                return stringize_event(*_ev);
+            }
+        }
+        {
+            cylindrical_pair_event const* _ev(dynamic_cast<cylindrical_pair_event const*>(&ev));
             if (_ev)
             {
                 return stringize_event(*_ev);
@@ -3962,16 +4115,31 @@ protected:
         }
     }
 
-    static std::string stringize_event(single_event const& ev)
+    static std::string stringize_event(spherical_single_event const& ev)
     {
-        return (boost::format("SingleEvent(t=%.16g, kind=%s, domain=%s)") %
+        return (boost::format("SphericalSingleEvent(t=%.16g, kind=%s, domain=%s)") %
             ev.time() % stringize_event_kind(ev.kind()) %
             boost::lexical_cast<std::string>(ev.domain())).str();
     }
 
-    static std::string stringize_event(pair_event const& ev)
+    static std::string stringize_event(cylindrical_single_event const& ev)
     {
-        return (boost::format("PairEvent(t=%.16g, kind=%s, domain=%s)") %
+        return (boost::format("CylindricalSingleEvent(t=%.16g, kind=%s, domain=%s)") %
+            ev.time() % stringize_event_kind(ev.kind()) %
+            boost::lexical_cast<std::string>(ev.domain())).str();
+    }
+
+
+    static std::string stringize_event(spherical_pair_event const& ev)
+    {
+        return (boost::format("SphericalPairEvent(t=%.16g, kind=%s, domain=%s)") %
+            ev.time() % stringize_event_kind(ev.kind()) %
+            boost::lexical_cast<std::string>(ev.domain())).str();
+    }
+
+    static std::string stringize_event(cylindrical_pair_event const& ev)
+    {
+        return (boost::format("CylindricalPairEvent(t=%.16g, kind=%s, domain=%s)") %
             ev.time() % stringize_event_kind(ev.kind()) %
             boost::lexical_cast<std::string>(ev.domain())).str();
     }
