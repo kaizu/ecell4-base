@@ -238,8 +238,6 @@ public:
     typedef typename traits_type::shell_id_type shell_id_type;
     typedef typename traits_type::template shell_generator<sphere_type>::type spherical_shell_type;
     typedef typename traits_type::template shell_generator<cylinder_type>::type cylindrical_shell_type;
-    // typedef typename traits_type::template shell_generator<sphere_type>::type spherical_shell_type;
-    // typedef typename traits_type::template shell_generator<cylinder_type>::type cylindrical_shell_type;
     typedef typename traits_type::domain_type domain_type;
     typedef typename traits_type::domain_id_pair domain_id_pair;
     typedef typename traits_type::time_type time_type;
@@ -323,23 +321,6 @@ public:
     };
 
 protected:
-    // typedef boost::fusion::map<
-    //     boost::fusion::pair<spherical_shell_type, 
-    //                         MatrixSpace<spherical_shell_type,
-    //                                     shell_id_type, ecell4::utils::get_mapper_mf>*>,
-    //     boost::fusion::pair<cylindrical_shell_type, MatrixSpace<cylindrical_shell_type,
-    //                                     shell_id_type, ecell4::utils::get_mapper_mf>*> >
-    //         shell_matrix_map_type;
-    // typedef typename boost::remove_pointer<
-    //     typename boost::fusion::result_of::value_at_key<
-    //         shell_matrix_map_type,
-    //         spherical_shell_type>::type>::type
-    //             spherical_shell_matrix_type;
-    // typedef typename boost::remove_pointer<
-    //     typename boost::fusion::result_of::value_at_key<
-    //         shell_matrix_map_type,
-    //         cylindrical_shell_type>::type>::type
-    //             cylindrical_shell_matrix_type;
 
     typedef MatrixSpace<spherical_shell_type, shell_id_type, ecell4::utils::get_mapper_mf> spherical_shell_matrix_type;
     typedef MatrixSpace<cylindrical_shell_type, shell_id_type, ecell4::utils::get_mapper_mf> cylindrical_shell_matrix_type;
@@ -401,8 +382,6 @@ protected:
         event_kind_type kind_;
     };
 
-    // typedef domain_event<single_type, single_event_kind> single_event;
-    // typedef domain_event<pair_type, pair_event_kind> pair_event;
     typedef domain_event<spherical_single_type, single_event_kind> spherical_single_event;
     typedef domain_event<cylindrical_single_type, single_event_kind> cylindrical_single_event;
     typedef domain_event<spherical_pair_type, pair_event_kind> spherical_pair_event;
@@ -487,7 +466,7 @@ protected:
     };
 
     template<typename TfilterFn_>
-    struct domain_collector 
+    struct domain_collector
     {
         typedef TfilterFn_ filter_function;
 
@@ -557,73 +536,6 @@ protected:
         domain_id_set const& ignore;
         std::pair<domain_id_type, length_type> closest;
     };
-
-    // template<typename Tcol_>
-    // struct shell_collector_applier
-    // {
-    //     typedef Tcol_ collector_type;
-
-    //     shell_collector_applier(collector_type& col,
-    //                                position_type const& pos)
-    //         : col_(col), pos_(pos) {}
-
-    //     template<typename T>
-    //     void operator()(T const& smat) const
-    //     {
-    //         world_type::traits_type::each_neighbor(*smat.second, col_, pos_);
-    //     }
-
-    // private:
-    //     collector_type& col_;
-    //     position_type pos_;
-    // };
-
-    // template<typename Tmap_>
-    // struct domain_shell_map_builder
-    // {
-    //     typedef Tmap_ domain_shell_association;
-    //     domain_shell_map_builder(world_type const& world,
-    //                              domain_shell_association& did_map)
-    //         : world_(world), did_map_(did_map) {}
-
-    //     template<typename T>
-    //     void operator()(T const& smat) const
-    //     {
-    //         BOOST_ASSERT(world_.edge_lengths() == (*smat.second).edge_lengths());
-    //         BOOST_FOREACH (typename boost::remove_pointer<typename T::second_type>::type::value_type pair, *smat.second)
-    //         {
-    //             did_map_[pair.second.did()].insert(pair.first);
-    //         }
-    //     }
-
-    // private:
-    //     world_type const& world_;
-    //     domain_shell_association& did_map_;
-    // };
-
-    // template<typename Tset_>
-    // struct shell_id_collector
-    // {
-    //     shell_id_collector(Tset_& shell_ids)
-    //         : shell_ids_(shell_ids) {}
-
-    //     template<typename T>
-    //     void operator()(T const& smat) const
-    //     {
-    //         std::for_each(
-    //             boost::begin(*smat.second),
-    //             boost::end(*smat.second),
-    //             compose_unary(
-    //                 boost::bind(&insert<Tset_>,
-    //                             boost::reference_wrapper<Tset_>(shell_ids_),
-    //                             _1),
-    //                 select_first<typename boost::remove_pointer<
-    //                     typename T::second_type>::type::value_type>()));
-    //     }
-
-    // private:
-    //     Tset_& shell_ids_;
-    // };
 
     struct shell_finder
     {
@@ -1013,10 +925,6 @@ public:
           user_max_shell_size_(user_max_shell_size),
           ssmat_(new spherical_shell_matrix_type((*world).edge_lengths(), (*world).matrix_sizes())),
           csmat_(new cylindrical_shell_matrix_type((*world).edge_lengths(), (*world).matrix_sizes())),
-          // smatm_(boost::fusion::pair<spherical_shell_type,
-          //                            spherical_shell_matrix_type*>(ssmat_.get()),
-          //        boost::fusion::pair<cylindrical_shell_type,
-          //                            cylindrical_shell_matrix_type*>(csmat_.get())),
           single_shell_factor_(.1),
           multi_shell_factor_(.05),
           rejected_moves_(0), zero_step_count_(0), dirty_(true)
@@ -1037,10 +945,6 @@ public:
           user_max_shell_size_(user_max_shell_size),
           ssmat_(new spherical_shell_matrix_type((*world).edge_lengths(), (*world).matrix_sizes())),
           csmat_(new cylindrical_shell_matrix_type((*world).edge_lengths(), (*world).matrix_sizes())),
-          // smatm_(boost::fusion::pair<spherical_shell_type,
-          //                            spherical_shell_matrix_type*>(ssmat_.get()),
-          //        boost::fusion::pair<cylindrical_shell_type,
-          //                            cylindrical_shell_matrix_type*>(csmat_.get())),
           single_shell_factor_(.1),
           multi_shell_factor_(.05),
           rejected_moves_(0), zero_step_count_(0), dirty_(true)
@@ -1066,62 +970,21 @@ public:
                    user_max_shell_size_);
     }
 
-    // template<typename Tshape>
-    // std::pair<const shell_id_type,
-    //           typename traits_type::template shell_generator<Tshape>::type>
-    // new_shell(domain_id_type const& did, Tshape const& shape)
-    // {
-    //     typedef typename traits_type::template shell_generator<Tshape>::type shell_type;
-    //     std::pair<const shell_id_type, shell_type> const retval(shidgen_(), shell_type(did, shape));
-    //     boost::fusion::at_key<shell_type>(smatm_)->update(retval);
-    //     return retval;
-    // }
-
-    std::pair<const shell_id_type,
-              typename traits_type::template shell_generator<sphere_type>::type>
+    std::pair<const shell_id_type, spherical_shell_type>
     new_shell(domain_id_type const& did, sphere_type const& shape)
     {
-        typedef typename traits_type::template shell_generator<sphere_type>::type shell_type;
-        std::pair<const shell_id_type, shell_type> const retval(shidgen_(), shell_type(did, shape));
+        std::pair<const shell_id_type, spherical_shell_type> const retval(shidgen_(), shell_type(did, shape));
         ssmat_->update(retval);
         return retval;
     }
 
-    std::pair<const shell_id_type,
-              typename traits_type::template shell_generator<cylinder_type>::type>
+    std::pair<const shell_id_type, cylindrical_shell_type>
     new_shell(domain_id_type const& did, cylinder_type const& shape)
     {
-        typedef typename traits_type::template shell_generator<cylinder_type>::type shell_type;
-        std::pair<const shell_id_type, shell_type> const retval(shidgen_(), shell_type(did, shape));
+        std::pair<const shell_id_type, cylindrical_shell_type> const retval(shidgen_(), shell_type(did, shape));
         csmat_->update(retval);
         return retval;
     }
-
-    // template<typename T>
-    // std::pair<const shell_id_type, T> const& get_shell(shell_id_type const& id) const
-    // {
-    //     typedef typename boost::remove_pointer<
-    //         typename boost::fusion::result_of::value_at_key<
-    //             shell_matrix_map_type, T>::type>::type shell_matrix_type;
-
-    //     shell_matrix_type const& smat(*boost::fusion::at_key<T>(smatm_));
-
-    //     typename shell_matrix_type::const_iterator i(smat.find(id));
-    //     if (i == smat.end())
-    //     {
-    //         throw not_found(
-    //             (boost::format("shell id #%s not found") % boost::lexical_cast<std::string>(id)).str());
-    //     }
-
-    //     return *i;
-    // }
-
-    // std::pair<shell_id_type, shell_variant_type> get_shell(shell_id_type const& id)
-    // {
-    //     shell_variant_type result;
-    //     boost::fusion::for_each(smatm_, shell_finder(id, result));
-    //     return std::make_pair(id, result);
-    // }
 
     boost::shared_ptr<domain_type> get_domain(domain_id_type const& id) const
     {
@@ -1218,16 +1081,12 @@ public:
                 newcsmat(new cylindrical_shell_matrix_type(edge_lengths, matrix_sizes));
             ssmat_.swap(newssmat);
             csmat_.swap(newcsmat);
-            // boost::fusion::at_key<spherical_shell_type>(smatm_) = ssmat_.get();
-            // boost::fusion::at_key<cylindrical_shell_type>(smatm_) = csmat_.get();
         }
 
         BOOST_FOREACH (particle_id_pair const& pp,
                        (*base_type::world_).get_particles_range())
         {
-            create_single_add_escape_event(pp);
-            // boost::shared_ptr<single_type> single(create_single(pp));
-            // add_event(*single, SINGLE_EVENT_ESCAPE);
+            wrap_single(pp);
         }
 
         BOOST_FOREACH (reaction_rule_type const& rr,
@@ -1235,6 +1094,7 @@ public:
         {
             add_event(rr);
         }
+
         dirty_ = false;
     }
 
@@ -1285,39 +1145,6 @@ public:
             }
             throw not_implemented("?");
         }
-
-        //XXX: Do singles really need to be bursted before pairs and multis?
-        // // first burst all Singles.
-        // BOOST_FOREACH (event_id_pair_type const& event, scheduler_.events())
-        // {
-        //     {
-        //         single_event const* single_ev(
-        //                 dynamic_cast<single_event const*>(event.second.get()));
-        //         if (single_ev)
-        //         {
-        //             burst(single_ev->domain());
-        //             continue;
-        //         }
-        //     }
-        //     {
-        //         birth_event const* birth_ev(
-        //                 dynamic_cast<birth_event const*>(event.second.get()));
-        //         if (birth_ev)
-        //         {
-        //             continue;
-        //         }
-        //     }
-        //     {
-        //         domain_event_base const* domain_ev(
-        //             dynamic_cast<domain_event_base const*>(event.second.get()));
-        //         BOOST_ASSERT(domain_ev);
-        //         non_singles.push_back(domain_ev->domain().id());
-        //         // continue;
-        //     }
-        // }
-
-        // // then burst all Pairs and Multis.
-        // burst_domains(non_singles);
 
         base_type::dt_ = 0.;
     }
@@ -1388,10 +1215,6 @@ public:
 
         domain_shell_association did_map;
 
-        // boost::fusion::for_each(smatm_,
-        //         domain_shell_map_builder<domain_shell_association>(
-        //             (*base_type::world_), did_map));
-
         {
             BOOST_ASSERT((*base_type::world_).edge_lengths() == (*ssmat_).edge_lengths());
             BOOST_FOREACH (typename spherical_shell_matrix_type::value_type pair, *ssmat_)
@@ -1456,8 +1279,6 @@ public:
         }
 
         std::set<shell_id_type> all_shell_ids;
-        // boost::fusion::for_each(smatm_,
-        //         shell_id_collector<std::set<shell_id_type> >(all_shell_ids));
 
         {
             BOOST_FOREACH(typename spherical_shell_matrix_type::value_type pair, *ssmat_)
@@ -1492,6 +1313,7 @@ public:
     }
 
 protected:
+
     // template<typename Tshell>
     // void move_shell(std::pair<const shell_id_type, Tshell> const& shell)
     // {
@@ -1606,15 +1428,6 @@ protected:
 
     // }}}
 
-    // remove_domain {{{
-    // template<typename T>
-    // void remove_domain(AnalyticalSingle<traits_type, T>& domain)
-    // {
-    //     typedef T shell_type;
-    //     boost::fusion::at_key<shell_type>(smatm_)->erase(domain.shell().first);
-    //     remove_domain_but_shell(domain);
-    // }
-
     void remove_domain(AnalyticalSingle<traits_type, spherical_shell_type>& domain)
     {
         ssmat_->erase(domain.shell().first);
@@ -1626,14 +1439,6 @@ protected:
         csmat_->erase(domain.shell().first);
         remove_domain_but_shell(domain);
     }
-
-    // template<typename T>
-    // void remove_domain(AnalyticalPair<traits_type, T>& domain)
-    // {
-    //     typedef T shell_type;
-    //     boost::fusion::at_key<shell_type>(smatm_)->erase(domain.shell().first);
-    //     remove_domain_but_shell(domain);
-    // }
 
     void remove_domain(AnalyticalPair<traits_type, spherical_shell_type>& domain)
     {
@@ -1651,7 +1456,6 @@ protected:
     {
         BOOST_FOREACH (spherical_shell_id_pair const& shell, domain.get_shells())
         {
-            // boost::fusion::at_key<spherical_shell_type>(smatm_)->erase(shell.first);
             ssmat_->erase(shell.first);
         }
         remove_domain_but_shell(domain);
@@ -1723,23 +1527,6 @@ protected:
         LOG_DEBUG(("add_event: #%d - %s", domain.event().first, boost::lexical_cast<std::string>(domain).c_str()));
     }
 
-    void add_event(single_type& domain, single_event_kind const& kind)
-    {
-        if (spherical_single_type* domain_ = dynamic_cast<spherical_single_type*>(&domain))
-        {
-            add_event(*domain_, kind);
-            return;
-        }
-
-        if (cylindrical_single_type* domain_ = dynamic_cast<cylindrical_single_type*>(&domain))
-        {
-            add_event(*domain_, kind);
-            return;
-        }
-
-        throw not_implemented("?");
-    }
-
     void add_event(spherical_pair_type& domain, pair_event_kind const& kind)
     {
         if (base_type::paranoiac_)
@@ -1761,23 +1548,6 @@ protected:
         domain.event() = std::make_pair(scheduler_.add(new_event), new_event);
         LOG_DEBUG(("add_event: #%d - %s", domain.event().first, boost::lexical_cast<std::string>(domain).c_str()));
     }
-
-    // void add_event(pair_type& domain, pair_event_kind const& kind)
-    // {
-    //     if (spherical_pair_type* domain_ = dynamic_cast<spherical_pair_type*>(&domain))
-    //     {
-    //         add_event(*domain_, kind);
-    //         return;
-    //     }
-
-    //     if (cylindrical_pair_type* domain_ = dynamic_cast<cylindrical_pair_type*>(&domain))
-    //     {
-    //         add_event(*domain_, kind);
-    //         return;
-    //     }
-
-    //     throw not_implemented("?");
-    // }
 
     void add_event(multi_type& domain)
     {
@@ -1812,12 +1582,10 @@ protected:
         remove_event(domain.event().first);
     }
 
-    boost::shared_ptr<single_type> create_single_add_escape_event(particle_id_pair const& p)
+    boost::shared_ptr<single_type> wrap_single(particle_id_pair const& p)
     {
         // boost::shared_ptr<single_type> new_single(create_single(p));
-        boost::shared_ptr<spherical_single_type> new_single(
-            create_spherical_single(p));
-
+        boost::shared_ptr<spherical_single_type> new_single(create_spherical_single(p));
         add_event(*new_single, SINGLE_EVENT_ESCAPE);
         return new_single;
     }
@@ -1832,32 +1600,6 @@ protected:
     //     struct factory: ImmutativeStructureVisitor<typename world_type::traits_type>
     //     {
     //         virtual ~factory() {}
-
-    //         // virtual void operator()(spherical_surface_type const& structure) const
-    //         // {
-    //         //     throw not_implemented(
-    //         //         (boost::format("unsupported structure type: %s") %
-    //         //             boost::lexical_cast<std::string>(structure)).str());
-    //         // }
-
-    //         // virtual void operator()(cylindrical_surface_type const& structure) const
-    //         // {
-    //         //     // Heads up. The cylinder's *size*, not radius, is changed when
-    //         //     // you make the cylinder bigger, because of the redefinition of
-    //         //     // set_radius.
-    //         //     // The radius of a rod is not more than it has to be (namely
-    //         //     // the radius of the particle), so if the particle undergoes an
-    //         //     // unbinding reaction, we still have to clear the target volume
-    //         //     // and the move may be rejected (NoSpace error).
-    //         //     const cylindrical_shell_id_pair new_shell(
-    //         //         _this->new_shell(
-    //         //             did, typename cylindrical_shell_type::shape_type(
-    //         //                 p.second.position(), p.second.radius(),
-    //         //                 structure.shape().unit_z(),
-    //         //                 p.second.radius())));
-    //         //     new_single = new cylindrical_single_type(did, p, new_shell);
-    //         //     kind = CYLINDRICAL_SINGLE;
-    //         // }
 
     //         // virtual void operator()(planar_surface_type const& structure) const
     //         // {
@@ -1941,29 +1683,7 @@ protected:
 
     //     struct factory: ImmutativeStructureVisitor<typename world_type::traits_type>
     //     {
-    //         // virtual void operator()(spherical_surface_type const& structure) const
-    //         // {
-    //         //     throw not_implemented(
-    //         //         (boost::format("unsupported structure type: %s") %
-    //         //             boost::lexical_cast<std::string>(structure)).str());
-    //         // }
-
-    //         // virtual void operator()(cylindrical_surface_type const& structure) const
-    //         // {
-    //         //     // The radius of a rod is not more than it has to be (namely
-    //         //     // the radius of the biggest particle), so if the particle
-    //         //     // undergoes an unbinding reaction we still have to clear the
-    //         //     // target volume and the move may be rejected (NoSpace error).
-    //         //     cylindrical_shell_id_pair const new_shell(
-    //         //         _this->new_shell(did, typename cylindrical_shell_type::shape_type(
-    //         //             com,
-    //         //             shell_size,
-    //         //             shape(structure).unit_z(),
-    //         //             std::max(p0.second.radius(), p1.second.radius()))));
-    //         //     new_pair = new cylindrical_pair_type(did, p0, p1, new_shell,
-    //         //                                          iv, rules);
-    //         //     kind = CYLINDRICAL_PAIR;
-    //         // }
+    //         virtual ~factory() {}
 
     //         // virtual void operator()(planar_surface_type const& structure) const
     //         // {
@@ -2182,26 +1902,6 @@ protected:
         return (*base_type::world_).apply_boundary(add(domain.particle().second.position(), displacement));
     }
 
-    // position_type draw_new_position(single_type& domain, time_type dt)
-    // {
-    //     {
-    //         spherical_single_type* _domain(dynamic_cast<spherical_single_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             return draw_new_position(*_domain, dt);
-    //         }
-    //     }
-    //     {
-    //         cylindrical_single_type* _domain(dynamic_cast<cylindrical_single_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             return draw_new_position(*_domain, dt);
-    //         }
-    //     }
-    //     throw not_implemented(std::string("unsupported domain type"));
-    // }
-    // }}}
-
     template<typename Tshell>
     position_type draw_escape_position(
             AnalyticalSingle<traits_type, Tshell> const& domain)
@@ -2221,25 +1921,6 @@ protected:
         }
         return (*base_type::world_).apply_boundary(add(domain.particle().second.position(), displacement));
     }
-
-    // position_type draw_escape_position(single_type& domain)
-    // {
-    //     {
-    //         spherical_single_type* _domain(dynamic_cast<spherical_single_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             return draw_escape_position(*_domain);
-    //         }
-    //     }
-    //     {
-    //         cylindrical_single_type* _domain(dynamic_cast<cylindrical_single_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             return draw_escape_position(*_domain);
-    //         }
-    //     }
-    //     throw not_implemented(std::string("unsupported domain type"));
-    // }
 
     // draw_new_positions {{{
     template<typename Tdraw, typename T>
@@ -2268,8 +1949,6 @@ protected:
      * So whoever calls propagate_single directly should reschedule the single 
      * afterwards.
      */
-    // void propagate(single_type& domain, position_type const& new_pos,
-    //                bool do_update_shell_matrix)
     template<typename T>
     void propagate(AnalyticalSingle<traits_type, T>& domain, position_type const& new_pos,
                    bool do_update_shell_matrix)
@@ -2328,13 +2007,9 @@ protected:
         remove_domain(domain);
 
         boost::array<boost::shared_ptr<single_type>, 2> const singles = { {
-            create_single_add_escape_event(new_particles[0]),
-            create_single_add_escape_event(new_particles[1]) 
+            wrap_single(new_particles[0]),
+            wrap_single(new_particles[1])
         } };
-        // boost::array<boost::shared_ptr<single_type>, 2> const singles = { {
-        //     create_single(new_particles[0]),
-        //     create_single(new_particles[1]) 
-        // } };
 
         if (log_.level() == Logger::L_DEBUG)
         {
@@ -2349,7 +2024,6 @@ protected:
         return singles;
     }
     // }}}
-
 
     template<typename Trange>
     void burst_domains(Trange const& domain_ids, boost::optional<std::vector<boost::shared_ptr<domain_type> >&> const& result = boost::optional<std::vector<boost::shared_ptr<domain_type> >&>())
@@ -2406,10 +2080,6 @@ protected:
         boost::array<boost::shared_ptr<single_type>, 2> const singles(
             propagate(domain, draw_new_positions<draw_on_burst>(domain, dt)));
 
-        //XXX: The followings are called in propagate now
-        // add_event(*singles[0], SINGLE_EVENT_ESCAPE);
-        // add_event(*singles[1], SINGLE_EVENT_ESCAPE);
-
         return singles;
     }
 
@@ -2417,9 +2087,7 @@ protected:
     {
         BOOST_FOREACH(particle_id_pair p, domain.get_particles_range())
         {
-            boost::shared_ptr<single_type> s(create_single_add_escape_event(p));
-            // boost::shared_ptr<single_type> s(create_single(p));
-            // add_event(*s, SINGLE_EVENT_ESCAPE);
+            boost::shared_ptr<single_type> s(wrap_single(p));
             if (result)
             {
                 result.get().push_back(boost::dynamic_pointer_cast<domain_type>(s));
@@ -2427,30 +2095,6 @@ protected:
         }
         remove_domain(domain);
     }
-
-    // void burst(single_type& domain)
-    // {
-    //     LOG_DEBUG(("burst: bursting %s", boost::lexical_cast<std::string>(domain).c_str()));
-    //     BOOST_ASSERT(this->t() >= domain.last_time());
-    //     BOOST_ASSERT(this->t() <= domain.last_time() + domain.dt());
-    //     {
-    //         spherical_single_type* _domain(dynamic_cast<spherical_single_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             burst(*_domain);
-    //             return;
-    //         }
-    //     }
-    //     {
-    //         cylindrical_single_type* _domain(dynamic_cast<cylindrical_single_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             burst(*_domain);
-    //             return;
-    //         }
-    //     }
-    //     throw not_implemented("?");
-    // }
 
     /*
      * void burst(domain_type* domain) is almost same as below.
@@ -2569,7 +2213,6 @@ protected:
     // }}}
 
     // attempt_single_reaction {{{
-    // bool attempt_single_reaction(single_type& domain)
     template <typename T>
     bool attempt_single_reaction(AnalyticalSingle<traits_type, T>& domain)
     {
@@ -2624,10 +2267,7 @@ protected:
                 particle_id_pair product(
                     (*base_type::world_).new_particle(
                         product_id0, reactant.second.position()).first);
-                boost::shared_ptr<single_type> new_domain(
-                    create_single_add_escape_event(product));
-                // boost::shared_ptr<single_type> new_domain(create_single(product));
-                // add_event(*new_domain, SINGLE_EVENT_ESCAPE);
+                boost::shared_ptr<single_type> new_domain(wrap_single(product));
                 if (base_type::rrec_)
                 {
                     // (*base_type::rrec_)(reaction_record_type(
@@ -2724,10 +2364,8 @@ protected:
                 };
                 // create domains for two particles and add them to
                 // the event queue
-                create_single_add_escape_event(pp[0]);
-                create_single_add_escape_event(pp[1]);
-                // add_event(*create_single(pp[0]), SINGLE_EVENT_ESCAPE);
-                // add_event(*create_single(pp[1]), SINGLE_EVENT_ESCAPE);
+                wrap_single(pp[0]);
+                wrap_single(pp[1]);
 
                 if (base_type::rrec_)
                 {
@@ -2863,29 +2501,6 @@ protected:
         add_event(domain, event_kind);
     }
 
-    // void determine_next_event(single_type& domain)
-    // {
-    //     {
-    //         spherical_single_type* _domain(
-    //             dynamic_cast<spherical_single_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             determine_next_event(*_domain);
-    //             return;
-    //         }
-    //     }
-    //     {
-    //         cylindrical_single_type* _domain(
-    //             dynamic_cast<cylindrical_single_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             determine_next_event(*_domain);
-    //             return;
-    //         }
-    //     }
-    //     throw not_implemented("unsupported domain type");
-    // }
-
     template<typename Tshell>
     void determine_next_event(AnalyticalPair<traits_type, Tshell>& domain)
     {
@@ -2899,30 +2514,6 @@ protected:
         add_event(domain, dt_and_event_pair.second);
     }
 
-    // void determine_next_event(pair_type& domain)
-    // {
-    //     {
-    //         spherical_pair_type* _domain(
-    //             dynamic_cast<spherical_pair_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             determine_next_event(*_domain);
-    //             return;
-    //         }
-    //     }
-    //     {
-    //         cylindrical_pair_type* _domain(
-    //             dynamic_cast<cylindrical_pair_type*>(&domain));
-    //         if (_domain)
-    //         {
-    //             determine_next_event(*_domain);
-    //             return;
-    //         }
-    //     }
-    //     throw not_implemented("unsupported domain type");
-    // }
-    // }}}
-
     // get_intruders {{{ 
     std::pair<std::vector<domain_id_type>*,
               std::pair<domain_id_type, length_type> >
@@ -2932,7 +2523,6 @@ protected:
         typedef intruder_collector collector_type;
 
         collector_type col((*base_type::world_), p, ignore);
-        // boost::fusion::for_each(smatm_, shell_collector_applier<collector_type>(col, p.position()));
         world_type::traits_type::each_neighbor(*ssmat_, col, p.position());
         world_type::traits_type::each_neighbor(*csmat_, col, p.position());
         return std::make_pair(col.intruders.container().get(), col.closest);
@@ -2946,7 +2536,6 @@ protected:
         typedef closest_object_finder<TdidSet> collector_type;
 
         collector_type col((*base_type::world_), p, ignore);
-        // boost::fusion::for_each(smatm_, shell_collector_applier<collector_type>(col, p));
         world_type::traits_type::each_neighbor(*ssmat_, col, p);
         world_type::traits_type::each_neighbor(*csmat_, col, p);
         return col.closest;
@@ -2978,29 +2567,6 @@ protected:
         remove_event(domain);
         determine_next_event(domain);
     }
-
-    // void restore_domain(single_type& domain)
-    // {
-    //     std::pair<domain_id_type, length_type> const closest(
-    //         get_closest_domain(
-    //             domain.position(), 
-    //             array_gen(domain.id())));
-    //     restore_domain(domain, closest);
-    // }
-
-    // void restore_domain(single_type& domain,
-    //                     std::pair<domain_id_type, length_type> const& closest)
-    // {
-    //     if (spherical_single_type* _domain = dynamic_cast<spherical_single_type*>(&domain))
-    //     {
-    //         return restore_domain(*_domain, closest);
-    //     }
-    //     if (cylindrical_single_type* _domain = dynamic_cast<cylindrical_single_type*>(&domain))
-    //     {
-    //         return restore_domain(*_domain, closest);
-    //     }
-    //     throw not_implemented(std::string("unsupported domain type"));
-    // }
 
     template<typename T>
     void restore_domain(AnalyticalSingle<traits_type, T>& domain)
@@ -3721,10 +3287,6 @@ protected:
                             continue;
 
                         restore_domain_remove_event_determine_next_event(*single);
-                        // restore_domain(*single);
-                        // // reschedule events for the restored domains
-                        // remove_event(*single);
-                        // determine_next_event(*single);
                     }
                 }
                 else
@@ -3819,7 +3381,6 @@ protected:
                     {
                         throw not_implemented("?");
                     }
-                    // attempt_single_reaction(*new_single[index]);
                 }
                 catch (no_space const&)
                 {
@@ -3838,13 +3399,9 @@ protected:
                         domain, dt));
                 boost::array<boost::shared_ptr<single_type>, 2> const new_single(
                     propagate(domain, new_pos));
-
-                //XXX: The followings are called in propagate now
-                // add_event(*new_single[0], SINGLE_EVENT_ESCAPE);
-                // add_event(*new_single[1], SINGLE_EVENT_ESCAPE);
             }
             break;
-        
+
         case PAIR_EVENT_IV_REACTION:
             {
                 LOG_DEBUG(("=> iv_reaction"));
@@ -3880,7 +3437,6 @@ protected:
                                     this->rng(),
                                     *base_type::world_).draw_com(
                                         domain, domain.dt())));
-                   
                         BOOST_ASSERT(
                             (*base_type::world_).distance(
                                 domain.shell().second.position(),
@@ -3895,10 +3451,7 @@ protected:
                                 new_species_id, new_com).first);
 
                         boost::shared_ptr<single_type> new_single(
-                            create_single_add_escape_event(new_particle));
-                        // boost::shared_ptr<single_type> new_single(
-                        //     create_single(new_particle));
-                        // add_event(*new_single, SINGLE_EVENT_ESCAPE);
+                            wrap_single(new_particle));
 
                         if (base_type::rrec_)
                         {
@@ -3930,10 +3483,6 @@ protected:
                         domain, dt));
                 boost::array<boost::shared_ptr<single_type>, 2> const new_single(
                     propagate(domain, new_pos));
-
-                //XXX: The followings are called in propagate now
-                // add_event(*new_single[0], SINGLE_EVENT_ESCAPE);
-                // add_event(*new_single[1], SINGLE_EVENT_ESCAPE);
             }
             break;
         }
@@ -4000,9 +3549,7 @@ protected:
             }
 
             boost::shared_ptr<single_type> single(
-                create_single_add_escape_event(pp));
-            // boost::shared_ptr<single_type> single(create_single(pp));
-            // add_event(*single, SINGLE_EVENT_ESCAPE);
+                wrap_single(pp));
         }
         catch (no_space const&)
         {
