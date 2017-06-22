@@ -97,11 +97,9 @@ struct WorldTraitsBase
     typedef ecell4::Real time_type;
     typedef ecell4::ParticleID particle_id_type;
     typedef ecell4::SerialIDGenerator<particle_id_type> particle_id_generator;
-    typedef ecell4::Species species_id_type; // std::string
-    // typedef ecell4::Species::serial_type species_id_type; // std::string
+    typedef ecell4::Species species_id_type;
     typedef ecell4::Particle particle_type;
     typedef ecell4::Real3 position_type;
-    // typedef ecell4::GSLRandomNumberGenerator rng_type;
     typedef ecell4::RandomNumberGenerator rng_type;
     typedef ecell4::Model model_type;
 
@@ -113,16 +111,11 @@ struct WorldTraitsBase
     };
 
     typedef MoleculeInfo molecule_info_type;
-    // typedef MoleculeInfo species_info_type;
-    // typedef SpeciesInfo<species_id_type, D_type, length_type, structure_id_type>
-    //     species_info_type;
 
-    // typedef Sphere particle_shape_type;
     typedef ecell4::Sphere particle_shape_type;
     typedef std::string structure_id_type;
 
     typedef std::pair<particle_id_type, particle_type> particle_id_pair;
-    // typedef std::pair<const particle_id_type, particle_type> particle_id_pair;
     typedef std::pair<particle_id_pair, length_type> particle_id_pair_and_distance;
     // typedef unassignable_adapter<particle_id_pair_and_distance, get_default_impl::std::vector> particle_id_pair_and_distance_list;
     typedef std::vector<particle_id_pair_and_distance> particle_id_pair_and_distance_list;
@@ -132,84 +125,71 @@ struct WorldTraitsBase
     typedef ecell4::Structure<Tderived_> particle_simulation_structure_type;
     typedef ecell4::AABBRegion<Tderived_> cuboidal_region_type;
 
-    // typedef Structure<Tderived_> structure_type;
-    // typedef ParticleSimulationStructure<Tderived_>
-    //     particle_simulation_structure_type;
-    // // typedef Surface<Tderived_> surface_type;
-    // // typedef Region<Tderived_> region_type;
-    // // typedef SphericalSurface<Tderived_> spherical_surface_type;
-    // // typedef CylindricalSurface<Tderived_> cylindrical_surface_type;
-    // // typedef PlanarSurface<Tderived_> planar_surface_type;
-    // typedef CuboidalRegion<Tderived_> cuboidal_region_type;
-
     static const Real tolerance();
     static const Real TOLERANCE;
 };
 
 template<typename Tderived_, typename TD_>
-const Real WorldTraitsBase<Tderived_, TD_>::tolerance()
-{
-    return 1e-7;
-}
+const Real WorldTraitsBase<Tderived_, TD_>::tolerance() { return 1e-7; }
 
 template<typename Tderived_, typename TD_>
 const Real WorldTraitsBase<Tderived_, TD_>::TOLERANCE = WorldTraitsBase<Tderived_, TD_>::tolerance();
 
+// template<typename TD_>
+// struct WorldTraits: public WorldTraitsBase<WorldTraits<TD_>, TD_>
+// {
+// public:
+//     typedef WorldTraitsBase<WorldTraits<TD_>, TD_> base_type;
+//     typedef typename base_type::length_type length_type;
+//     typedef typename base_type::position_type position_type;
+// 
+//     template<typename Tval_>
+//     static Tval_ apply_boundary(Tval_ const& v, position_type const& edge_lengths)
+//     {
+//         return v;
+//     }
+// 
+//     template<typename Tval_>
+//     static Tval_ periodic_transpose(Tval_ const& p0, Tval_ const& p1, Tval_ const& world_size)
+//     {
+//         return p0;
+//     }
+// 
+//     template<typename T1_, typename T2_>
+//     static length_type distance(T1_ const& p0, T2_ const& p1, position_type const& edge_lengths)
+//     {
+//         return ::distance(p0, p1);
+//     }
+// 
+//     template<typename Toc_, typename Tfun_, typename Tsphere_>
+//     static void each_neighbor(Toc_& oc, Tfun_& fun, Tsphere_ const& pos)
+//     {
+//         oc.each_neighbor(oc.index(pos), fun);
+//     }
+// 
+//     template<typename Toc_, typename Tfun_, typename Tsphere_>
+//     static void each_neighbor(Toc_ const& oc, Tfun_& fun, Tsphere_ const& pos)
+//     {
+//         oc.each_neighbor(oc.index(pos), fun);
+//     }
+// 
+//     template<typename Toc_, typename Tfun_, typename Tsphere_>
+//     static void take_neighbor(Toc_& oc, Tfun_& fun, const Tsphere_& cmp)
+//     {
+//         take_neighbor(oc, fun, cmp);
+//     }
+// 
+//     template<typename Toc_, typename Tfun_, typename Tsphere_>
+//     static void take_neighbor(Toc_ const& oc, Tfun_& fun, const Tsphere_& cmp)
+//     {
+//         take_neighbor(oc, fun, cmp);
+//     }
+// };
+
 template<typename TD_>
-struct WorldTraits: public WorldTraitsBase<WorldTraits<TD_>, TD_>
+struct CyclicWorldTraits:
+    public WorldTraitsBase<CyclicWorldTraits<TD_>, TD_>
 {
-public:
-    typedef WorldTraitsBase<WorldTraits<TD_>, TD_> base_type;
-    typedef typename base_type::length_type length_type;
-    typedef typename base_type::position_type position_type;
-
-    template<typename Tval_>
-    static Tval_ apply_boundary(Tval_ const& v, position_type const& edge_lengths)
-    {
-        return v;
-    }
-
-    template<typename Tval_>
-    static Tval_ periodic_transpose(Tval_ const& p0, Tval_ const& p1, Tval_ const& world_size)
-    {
-        return p0;
-    }
-
-    template<typename T1_, typename T2_>
-    static length_type distance(T1_ const& p0, T2_ const& p1, position_type const& edge_lengths)
-    {
-        return ::distance(p0, p1);
-    }
-
-    template<typename Toc_, typename Tfun_, typename Tsphere_>
-    static void each_neighbor(Toc_& oc, Tfun_& fun, Tsphere_ const& pos)
-    {
-        oc.each_neighbor(oc.index(pos), fun);
-    }
-
-    template<typename Toc_, typename Tfun_, typename Tsphere_>
-    static void each_neighbor(Toc_ const& oc, Tfun_& fun, Tsphere_ const& pos)
-    {
-        oc.each_neighbor(oc.index(pos), fun);
-    }
-
-    template<typename Toc_, typename Tfun_, typename Tsphere_>
-    static void take_neighbor(Toc_& oc, Tfun_& fun, const Tsphere_& cmp)
-    {
-        take_neighbor(oc, fun, cmp);
-    }
-
-    template<typename Toc_, typename Tfun_, typename Tsphere_>
-    static void take_neighbor(Toc_ const& oc, Tfun_& fun, const Tsphere_& cmp)
-    {
-        take_neighbor(oc, fun, cmp);
-    }
-};
-
-template<typename TD_>
-struct CyclicWorldTraits: public WorldTraitsBase<CyclicWorldTraits<TD_>, TD_>
-{
-public:
     typedef WorldTraitsBase<CyclicWorldTraits<TD_>, TD_> base_type;
     typedef typename base_type::length_type length_type;
     typedef typename base_type::position_type position_type;

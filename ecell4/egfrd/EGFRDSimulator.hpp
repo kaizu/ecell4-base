@@ -63,7 +63,8 @@ struct EGFRDSimulatorTraitsBase: public ParticleSimulatorTraitsBase<Tworld_>
     typedef ecell4::SerialIDGenerator<domain_id_type> domain_id_generator;
     typedef Domain<EGFRDSimulatorTraitsBase> domain_type;
     typedef std::pair<const domain_id_type, boost::shared_ptr<domain_type> > domain_id_pair;
-    typedef ecell4::EventScheduler event_scheduler_type; // base_type::time_type == ecell4::Real
+    typedef ecell4::EventScheduler event_scheduler_type;
+    // typedef base_type::time_type == ecell4::Real
     // typedef EventScheduler<typename base_type::time_type> event_scheduler_type;
 
     typedef typename event_scheduler_type::identifier_type event_id_type;
@@ -214,7 +215,6 @@ struct MutativeDomainVisitor
     virtual void operator()(cylindrical_pair_type&) const = 0;
 };
 
-
 #define CHECK(expr) \
     do \
     { \
@@ -222,7 +222,8 @@ struct MutativeDomainVisitor
     } while (0)
 
 template<typename Ttraits_>
-class EGFRDSimulator: public ParticleSimulator<Ttraits_>
+class EGFRDSimulator:
+    public ParticleSimulator<Ttraits_>
 {
 public:
 
@@ -1055,6 +1056,8 @@ public:
 
     virtual void initialize()
     {
+        // log_.level(Logger::L_DEBUG);
+
         const position_type& edge_lengths((*base_type::world_).edge_lengths());
         const typename world_type::matrix_sizes_type&
             matrix_sizes((*base_type::world_).matrix_sizes());
@@ -2533,6 +2536,7 @@ protected:
                         std::pair<domain_id_type, length_type> const& closest)
     {
         typedef typename AnalyticalSingle<traits_type, T>::shell_type shell_type;
+
         domain_type const* closest_domain(
             closest.second == std::numeric_limits<length_type>::infinity() ?
                 (domain_type const*)0: get_domain(closest.first).get());
@@ -2554,7 +2558,7 @@ protected:
             } else {
                 new_shell_size = closest.second / traits_type::SAFETY;
             }
-            new_shell_size = std::min(max_shell_size(), 
+            new_shell_size = std::min(max_shell_size(),
                 std::max(domain.particle().second.radius(), new_shell_size));
         }
         else
