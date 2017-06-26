@@ -25,7 +25,8 @@
 #include "./ParticleTraits.hpp" // This refers ecell4::Particle
 #include "structures.hpp"
 
-#include <ecell4/core/ParticleSpaceCellListImpl.hpp>
+#include <ecell4/core/ParticleSpaceNewCellListImpl.hpp>
+// #include <ecell4/core/ParticleSpaceCellListImpl.hpp>
 #include "ParticleContainer.hpp"
 
 #include <map>
@@ -274,7 +275,8 @@ public:
     typedef MatrixSpace<particle_type, particle_id_type, ecell4::utils::get_mapper_mf> particle_matrix_type;
     typedef sized_iterator_range<typename particle_matrix_type::const_iterator> particle_id_pair_range;
     typedef typename particle_matrix_type::matrix_sizes_type matrix_sizes_type;
-    typedef ecell4::ParticleSpaceCellListImpl particle_space_type;
+    // typedef ecell4::ParticleSpaceCellListImpl particle_space_type;
+    typedef ecell4::ParticleSpaceNewCellListImpl particle_space_type;
     typedef typename base_type::transaction_type transaction_type;
     typedef typename base_type::time_type time_type;
 
