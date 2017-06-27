@@ -1976,14 +1976,14 @@ protected:
         return singles;
     }
 
-    // void burst(multi_type& domain)
-    // {
-    //     BOOST_FOREACH(particle_id_pair p, domain.get_particles_range())
-    //     {
-    //         wrap_single(p);
-    //     }
-    //     remove_domain(domain);
-    // }
+    void burst(multi_type& domain)
+    {
+        BOOST_FOREACH(particle_id_pair p, domain.get_particles_range())
+        {
+            wrap_single(p);
+        }
+        remove_domain(domain);
+    }
 
     /*
      * void burst(domain_type* domain) is almost same as below.
