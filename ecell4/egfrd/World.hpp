@@ -128,6 +128,34 @@ struct WorldTraitsBase
 
     static const Real tolerance();
     static const Real TOLERANCE;
+
+    typedef struct
+    {
+        typedef void* particle_info_type;
+        typedef std::pair<ecell4::Particle, particle_info_type> particle_type;
+        typedef std::pair<ecell4::ParticleID, particle_type> particle_id_pair_type;
+
+        static ecell4::Particle const& get(particle_type const& v)
+        {
+            return v.first;
+        }
+
+        static particle_type as(ecell4::Particle const& p)
+        {
+            return std::make_pair(p, (void*)NULL);
+        }
+
+        static std::pair<ecell4::ParticleID, ecell4::Particle> get(particle_id_pair_type  const& p)
+        {
+            return std::make_pair(p.first, get(p.second));
+        }
+
+        static particle_id_pair_type as(std::pair<ecell4::ParticleID, ecell4::Particle> const& p)
+        {
+            return std::make_pair(p.first, as(p.second));
+        }
+    }
+    particle_space_traits_type;
 };
 
 template<typename Tderived_, typename TD_>
@@ -272,13 +300,19 @@ public:
     /**
      * ParticleContainerBase
      */
-    typedef MatrixSpace<particle_type, particle_id_type, ecell4::utils::get_mapper_mf> particle_matrix_type;
-    typedef sized_iterator_range<typename particle_matrix_type::const_iterator> particle_id_pair_range;
-    typedef typename particle_matrix_type::matrix_sizes_type matrix_sizes_type;
+
+    typedef typename traits_type::particle_space_traits_type particle_space_traits_type;
+    typedef typename ecell4::ParticleSpaceNewCellListImpl<particle_space_traits_type> particle_space_type;
     // typedef ecell4::ParticleSpaceCellListImpl particle_space_type;
-    typedef ecell4::ParticleSpaceNewCellListImpl particle_space_type;
+
     typedef typename base_type::transaction_type transaction_type;
     typedef typename base_type::time_type time_type;
+
+    // typedef MatrixSpace<particle_type, particle_id_type, ecell4::utils::get_mapper_mf> particle_matrix_type;
+    // typedef sized_iterator_range<typename particle_matrix_type::const_iterator> particle_id_pair_range;
+    // typedef typename particle_matrix_type::matrix_sizes_type matrix_sizes_type;
+    typedef sized_iterator_range<typename std::vector<typename particle_space_traits_type::particle_id_pair_type>::const_iterator> particle_id_pair_range;
+    typedef ecell4::Integer3 matrix_sizes_type;
 
 protected:
 
@@ -879,9 +913,15 @@ public:
 
     particle_id_pair_range get_particles_range() const
     {
-        const particle_space_type::particle_container_type& particles((*ps_).particles());
+        const std::vector<typename particle_space_traits_type::particle_id_pair_type>& particles((*ps_).particle_container());
         return particle_id_pair_range(particles.begin(), particles.end(), particles.size());
     }
+
+    // particle_id_pair_range get_particles_range() const
+    // {
+    //     const typename particle_space_type::particle_container_type& particles((*ps_).particles());
+    //     return particle_id_pair_range(particles.begin(), particles.end(), particles.size());
+    // }
 
     /**
      *

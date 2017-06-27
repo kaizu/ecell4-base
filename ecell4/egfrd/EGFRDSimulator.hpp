@@ -265,6 +265,7 @@ public:
     typedef typename world_type::particle_id_pair particle_id_pair;
     typedef typename world_type::particle_id_pair_and_distance particle_id_pair_and_distance;
     typedef typename world_type::particle_id_pair_and_distance_list particle_id_pair_and_distance_list;
+    typedef typename world_type::particle_space_traits_type particle_space_traits_type;
 
     typedef std::pair<const shell_id_type, spherical_shell_type> spherical_shell_id_pair;
     typedef std::pair<const shell_id_type, cylindrical_shell_type> cylindrical_shell_id_pair;
@@ -1078,10 +1079,10 @@ public:
             csmat_.swap(newcsmat);
         }
 
-        BOOST_FOREACH (particle_id_pair const& pp,
+        BOOST_FOREACH (typename particle_space_traits_type::particle_id_pair_type const& pp,
                        (*base_type::world_).get_particles_range())
         {
-            wrap_single(pp);
+            wrap_single(particle_space_traits_type::get(pp));
         }
 
         BOOST_FOREACH (reaction_rule_type const& rr,
