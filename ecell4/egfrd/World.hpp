@@ -140,19 +140,25 @@ struct WorldTraitsBase
             return v.first;
         }
 
-        static particle_type as(ecell4::Particle const& p)
-        {
-            return std::make_pair(p, (void*)NULL);
-        }
-
         static std::pair<ecell4::ParticleID, ecell4::Particle> get(particle_id_pair_type  const& p)
         {
             return std::make_pair(p.first, get(p.second));
         }
 
+        static particle_type as(ecell4::Particle const& p, particle_info_type const& pinfo = (void*)NULL)
+        {
+            return std::make_pair(p, pinfo);
+        }
+
         static particle_id_pair_type as(std::pair<ecell4::ParticleID, ecell4::Particle> const& p)
         {
             return std::make_pair(p.first, as(p.second));
+        }
+
+        static particle_id_pair_type as(std::pair<ecell4::ParticleID, ecell4::Particle> const& p, particle_id_pair_type const& old)
+        {
+            BOOST_ASSERT(p.first == old.first);
+            return std::make_pair(p.first, as(p.second, old.second.second));
         }
     }
     particle_space_traits_type;

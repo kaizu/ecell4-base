@@ -324,7 +324,7 @@ protected:
         if (new_cell == old_cell)
         {
             // reinterpret_cast<nonconst_value_type&>(*old_value) = v;
-            *old_value = traits_type::as(v);
+            *old_value = traits_type::as(v, *old_value);
             return old_value;
         }
         else
@@ -334,7 +334,7 @@ protected:
             if (old_cell)
             {
                 // reinterpret_cast<nonconst_value_type&>(*old_value) = v;
-                *old_value = traits_type::as(v);
+                *old_value = traits_type::as(v, *old_value);
 
                 typename cell_type::iterator
                     i(find_in_cell(old_cell, old_value - particles_.begin()));
@@ -372,7 +372,7 @@ protected:
         if (new_cell == old_cell)
         {
             // reinterpret_cast<nonconst_value_type&>(*old_value) = v;
-            *old_value = traits_type::as(v);
+            *old_value = traits_type::as(v, *old_value);
             // return std::pair<typename std::vector<particle_id_pair_type>::iterator, bool>(old_value, false);
             return std::make_pair(old_value, false);
         }
@@ -383,7 +383,7 @@ protected:
             if (old_cell)
             {
                 // reinterpret_cast<nonconst_value_type&>(*old_value) = v;
-                *old_value = traits_type::as(v);
+                *old_value = traits_type::as(v, *old_value);
 
                 typename cell_type::iterator
                     i(find_in_cell(old_cell, old_value - particles_.begin()));

@@ -1853,8 +1853,8 @@ protected:
 
         if (base_type::paranoiac_)
         {
-            particle_shape_type const new_particle(new_pos, domain.particle().second.radius());
-            BOOST_ASSERT(check_overlap(new_particle, domain.particle().first));
+            particle_shape_type const new_p(new_pos, domain.particle().second.radius());
+            BOOST_ASSERT(check_overlap(new_p, domain.particle().first));
         }
 
         particle_type const& old(domain.particle().second);
@@ -1875,33 +1875,33 @@ protected:
               boost::array<position_type, 2> const& new_pos)
     {
         boost::array<particle_id_pair, 2> const& particles(domain.particles());
-        boost::array<particle_id_pair, 2> new_particles(particles);
-        new_particles[0].second.position() = new_pos[0];
-        new_particles[1].second.position() = new_pos[1];
+        boost::array<particle_id_pair, 2> new_p(particles);
+        new_p[0].second.position() = new_pos[0];
+        new_p[1].second.position() = new_pos[1];
 
         if (base_type::paranoiac_)
         {
-            BOOST_ASSERT(distance(domain, new_particles[0].second.position()) <= -new_particles[0].second.radius());
-            BOOST_ASSERT(distance(domain, new_particles[1].second.position()) <= -new_particles[1].second.radius());
+            BOOST_ASSERT(distance(domain, new_p[0].second.position()) <= -new_p[0].second.radius());
+            BOOST_ASSERT(distance(domain, new_p[1].second.position()) <= -new_p[1].second.radius());
             BOOST_ASSERT(check_overlap(
-                shape(new_particles[0].second),
-                new_particles[0].first, new_particles[1].first));
+                shape(new_p[0].second),
+                new_p[0].first, new_p[1].first));
             BOOST_ASSERT(check_overlap(
-                shape(new_particles[1].second),
-                new_particles[0].first, new_particles[1].first));
-            BOOST_ASSERT(check_pair_pos(domain, new_particles));
+                shape(new_p[1].second),
+                new_p[0].first, new_p[1].first));
+            BOOST_ASSERT(check_pair_pos(domain, new_p));
         }
 
         (*base_type::world_).update_particle(
-            new_particles[0].first, new_particles[0].second);
+            new_p[0].first, new_p[0].second);
         (*base_type::world_).update_particle(
-            new_particles[1].first, new_particles[1].second);
+            new_p[1].first, new_p[1].second);
 
         remove_domain(domain);
 
         boost::array<boost::shared_ptr<single_type>, 2> const singles = { {
-            wrap_single(new_particles[0]),
-            wrap_single(new_particles[1])
+            wrap_single(new_p[0]),
+            wrap_single(new_p[1])
         } };
 
         if (log_.level() == Logger::L_DEBUG)
@@ -2132,7 +2132,7 @@ protected:
                         r01 * (D0 / D01) + radius0, r01 * (D1 / D01) + radius1));
                 clear_volume(particle_shape_type(reactant.second.position(), rad), domain.id());
 
-                particle_shape_type new_particles[2];
+                particle_shape_type new_p[2];
 
                 int i = num_retries_;
                 while (--i >= 0)
@@ -2148,12 +2148,12 @@ protected:
                     // this way, species with D=0 doesn't move.
                     // FIXME: what if D1 == D2 == 0?
                     for (;;) {
-                        new_particles[0] = particle_shape_type(
+                        new_p[0] = particle_shape_type(
                             (*base_type::world_).apply_boundary(
                                 add(reactant.second.position(),
                                     multiply(vector, D0 / D01))),
                             radius0);
-                        new_particles[1] = particle_shape_type(
+                        new_p[1] = particle_shape_type(
                             (*base_type::world_).apply_boundary(
                                 add(reactant.second.position(),
                                     multiply(vector, -D1 / D01))),
@@ -2161,8 +2161,8 @@ protected:
 
                         length_type const distance_between_new_particles(
                             (*base_type::world_).distance(
-                                new_particles[0].position(),
-                                new_particles[1].position()));
+                                new_p[0].position(),
+                                new_p[1].position()));
                         if (distance_between_new_particles >= r01)
                             break;
 
@@ -2171,9 +2171,9 @@ protected:
 
                     // accept the new positions if there is enough space.
                     if (((*base_type::world_).no_overlap(
-                            new_particles[0], reactant.first)) &&
+                            new_p[0], reactant.first)) &&
                         ((*base_type::world_).no_overlap(
-                            new_particles[1], reactant.first)))
+                            new_p[1], reactant.first)))
                         break;
                 }
                 if (i < 0)
@@ -2187,9 +2187,9 @@ protected:
 
                 particle_id_pair const pp[] = {
                     (*base_type::world_).new_particle(
-                        product_id0, new_particles[0].position()).first,
+                        product_id0, new_p[0].position()).first,
                     (*base_type::world_).new_particle(
-                        product_id1, new_particles[1].position()).first
+                        product_id1, new_p[1].position()).first
                 };
                 // create domains for two particles and add them to
                 // the event queue
@@ -3414,11 +3414,11 @@ protected:
                 this->rng().uniform(0, (*base_type::world_).edge_lengths()[1]),
                 this->rng().uniform(0, (*base_type::world_).edge_lengths()[2]));
 
-            const particle_shape_type new_particle(new_pos, minfo.radius);
+            const particle_shape_type new_p(new_pos, minfo.radius);
 
-            clear_volume(new_particle);
+            clear_volume(new_p);
 
-            if (!(*base_type::world_).no_overlap(new_particle))
+            if (!(*base_type::world_).no_overlap(new_p))
             {
                 LOG_INFO(("no space for product particle."));
                 throw no_space();
@@ -3896,13 +3896,13 @@ protected:
 
     template<typename T>
     bool check_pair_pos(AnalyticalPair<traits_type, T> const& domain,
-                        boost::array<particle_id_pair, 2> const& new_particles)
+                        boost::array<particle_id_pair, 2> const& new_p)
     {
         length_type const new_distance(
-            (*base_type::world_).distance(new_particles[0].second.position(),
-                                          new_particles[1].second.position()));
-        length_type const r01(new_particles[0].second.radius() +
-                              new_particles[1].second.radius());
+            (*base_type::world_).distance(new_p[0].second.position(),
+                                          new_p[1].second.position()));
+        length_type const r01(new_p[0].second.radius() +
+                              new_p[1].second.radius());
 
         if (new_distance <= r01)
         {
@@ -3917,8 +3917,8 @@ protected:
         position_type const& com(shape(domain.shell().second).position());
         length_type const radius(shape(domain.shell().second).radius());
         length_type const d[2] = {
-            (*base_type::world_).distance(com, new_particles[0].second.position()) + new_particles[0].second.radius(),
-            (*base_type::world_).distance(com, new_particles[1].second.position()) + new_particles[1].second.radius()
+            (*base_type::world_).distance(com, new_p[0].second.position()) + new_p[0].second.radius(),
+            (*base_type::world_).distance(com, new_p[1].second.position()) + new_p[1].second.radius()
         };
         if (d[0] > radius || d[1] > radius)
         {
