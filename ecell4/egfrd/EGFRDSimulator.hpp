@@ -1844,7 +1844,7 @@ protected:
      */
     template<typename T>
     void propagate(AnalyticalSingle<traits_type, T>& domain, position_type const& new_pos,
-                   bool do_update_shell_matrix)
+                   time_type dt, bool do_update_shell_matrix)
     {
         LOG_DEBUG(("propagate: domain=%s, new_pos=%s, do_update_shell_matrix=%d",
                 boost::lexical_cast<std::string>(domain).c_str(),
@@ -1860,8 +1860,13 @@ protected:
         particle_type const& old(domain.particle().second);
         domain.particle().second = particle_type(old.sid(),
                 new_pos, old.radius(), old.D());
+        // (*base_type::world_).update_particle(
+        //     domain.particle().first, domain.particle().second);
+
+        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo = (*base_type::world_).get_particle_with_info(domain.particle().first);
+        world_type::particle_space_traits_type::propagate(this->rng(), pinfo, dt);
         (*base_type::world_).update_particle(
-            domain.particle().first, domain.particle().second);
+            world_type::particle_space_traits_type::as(domain.particle(), pinfo));
 
         domain.position() = new_pos;
         domain.size() = domain.particle().second.radius();
@@ -1872,7 +1877,7 @@ protected:
     template<typename T>
     boost::array<boost::shared_ptr<single_type>, 2>
     propagate(AnalyticalPair<traits_type, T>& domain,
-              boost::array<position_type, 2> const& new_pos)
+              boost::array<position_type, 2> const& new_pos, time_type dt)
     {
         boost::array<particle_id_pair, 2> const& particles(domain.particles());
         boost::array<particle_id_pair, 2> new_p(particles);
@@ -1892,10 +1897,19 @@ protected:
             BOOST_ASSERT(check_pair_pos(domain, new_p));
         }
 
+        // (*base_type::world_).update_particle(
+        //     new_p[0].first, new_p[0].second);
+        // (*base_type::world_).update_particle(
+        //     new_p[1].first, new_p[1].second);
+
+        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo0 = (*base_type::world_).get_particle_with_info(new_p[0].first);
+        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = (*base_type::world_).get_particle_with_info(new_p[1].first);
+        world_type::particle_space_traits_type::propagate(this->rng(), pinfo0, dt);
+        world_type::particle_space_traits_type::propagate(this->rng(), pinfo1, dt);
         (*base_type::world_).update_particle(
-            new_p[0].first, new_p[0].second);
+            world_type::particle_space_traits_type::as(new_p[0], pinfo0));
         (*base_type::world_).update_particle(
-            new_p[1].first, new_p[1].second);
+            world_type::particle_space_traits_type::as(new_p[1], pinfo1));
 
         remove_domain(domain);
 
@@ -1942,7 +1956,7 @@ protected:
 
         position_type const new_pos(draw_new_position(domain, domain.dt()));
 
-        propagate(domain, new_pos, true);
+        propagate(domain, new_pos, domain.dt(), true);
 
         domain.last_time() = this->t();
         domain.dt() = 0.;
@@ -1971,7 +1985,7 @@ protected:
         length_type const dt(this->t() - domain.last_time());
 
         boost::array<boost::shared_ptr<single_type>, 2> const singles(
-            propagate(domain, draw_new_positions<draw_on_burst>(domain, dt)));
+            propagate(domain, draw_new_positions<draw_on_burst>(domain, dt), dt));
 
         return singles;
     }
@@ -3092,7 +3106,7 @@ protected:
                 "fire_single: single reaction (%s)",
                 boost::lexical_cast<std::string>(domain).c_str()));
 
-            propagate(domain, draw_new_position(domain, domain.dt()), false);
+            propagate(domain, draw_new_position(domain, domain.dt()), domain.dt(), false);
             try
             {
                 attempt_single_reaction(domain);
@@ -3123,8 +3137,8 @@ protected:
             if (domain.dt() != 0.)
             {
                 // Heads up: shell matrix will be updated later in restore_domain().
-                // propagate(domain, draw_new_position(domain, domain.dt()), false);
-                propagate(domain, draw_escape_position(domain), false);
+                // propagate(domain, draw_new_position(domain, domain.dt()), domain.dt(), false);
+                propagate(domain, draw_escape_position(domain), domain.dt(), false);
             }
 
             length_type const min_shell_radius(
@@ -3283,7 +3297,7 @@ protected:
                     draw_new_positions<draw_on_com_escape>(
                         domain, dt));
                 boost::array<boost::shared_ptr<single_type>, 2> const new_single(
-                    propagate(domain, new_pos));
+                    propagate(domain, new_pos, dt));
             }
             break;
 
@@ -3367,7 +3381,7 @@ protected:
                     draw_new_positions<draw_on_iv_escape>(
                         domain, dt));
                 boost::array<boost::shared_ptr<single_type>, 2> const new_single(
-                    propagate(domain, new_pos));
+                    propagate(domain, new_pos, dt));
             }
             break;
         }

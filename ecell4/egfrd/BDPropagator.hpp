@@ -169,7 +169,10 @@ public:
                 return true;
             }
         }
-        tx_.update_particle(particle_to_update.first, particle_to_update.second);
+        // tx_.update_particle(particle_to_update.first, particle_to_update.second);
+        typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo = tx_.get_particle_with_info(particle_to_update.first);
+        traits_type::world_type::particle_space_traits_type::propagate(rng_, pinfo, dt_);
+        tx_.update_particle(traits_type::world_type::particle_space_traits_type::as(particle_to_update, pinfo));
         return true;
     }
 

@@ -245,6 +245,16 @@ public:
         world_.set_t(t);
     }
 
+    virtual typename traits_type::particle_space_traits_type::particle_id_pair_type const& get_particle_with_info(const particle_id_type& pid) const
+    {
+        return world_.get_particle_with_info(pid);  // This is slow
+    }
+
+    virtual bool update_particle(typename traits_type::particle_space_traits_type::particle_id_pair_type const& p)
+    {
+        return world_.update_particle(p);
+    }
+
 private:
     world_type& world_;
     particle_map particles_;

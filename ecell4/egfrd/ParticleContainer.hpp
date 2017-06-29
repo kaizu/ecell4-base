@@ -134,6 +134,11 @@ public:
     {
         return pos + disp;
     }
+
+    virtual typename traits_type::particle_space_traits_type::particle_id_pair_type const& get_particle_with_info(const particle_id_type& pid) const = 0;
+
+    virtual bool update_particle(typename traits_type::particle_space_traits_type::particle_id_pair_type const& p) = 0;
+
 };
 
 

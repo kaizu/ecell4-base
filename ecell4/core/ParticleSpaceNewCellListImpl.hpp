@@ -186,6 +186,139 @@ public:
             const Real3& pos, const Real& radius,
             const ParticleID& ignore1, const ParticleID& ignore2) const;
 
+    particle_id_pair_type const& get_particle_with_info(const ParticleID& pid) const
+    {
+        typename std::vector<particle_id_pair_type>::const_iterator i(this->find(pid));
+        if (i == particles_.end())
+        {
+            throw NotFound("No such particle.");
+        }
+        return (*i);
+    }
+
+    bool update_particle(particle_id_pair_type const& p)
+    {
+        ParticleID const& pid = p.first;
+        Particle const& p1 = traits_type::get(p.second);
+        typename std::vector<particle_id_pair_type>::iterator i(find(pid));
+        if (i != particles_.end())
+        {
+            Particle const& p0(traits_type::get((*i).second));
+            if (p0.species() != p1.species())
+            {
+                particle_pool_[p0.species_serial()].erase((*i).first);
+                particle_pool_[p1.species_serial()].insert(pid);
+            }
+            this->update(i, p);
+            return false;
+        }
+
+        this->update(p);
+        // const bool succeeded(this->update(std::make_pair(pid, p)).second);
+        // BOOST_ASSERT(succeeded);
+
+        particle_pool_[p1.species_serial()].insert(pid);
+        return true;
+    }
+
+protected:
+
+    inline typename std::vector<particle_id_pair_type>::iterator update(
+        typename std::vector<particle_id_pair_type>::iterator const& old_value,
+        const particle_id_pair_type& v)
+    {
+        cell_type* new_cell(&cell(index(traits_type::get(v.second).position())));
+        cell_type* old_cell(0);
+
+        if (old_value != particles_.end())
+        {
+            old_cell = &cell(index(traits_type::get((*old_value).second).position()));
+        }
+
+        if (new_cell == old_cell)
+        {
+            // reinterpret_cast<nonconst_value_type&>(*old_value) = v;
+            *old_value = v;
+            return old_value;
+        }
+        else
+        {
+            typename std::vector<particle_id_pair_type>::size_type idx(0);
+
+            if (old_cell)
+            {
+                // reinterpret_cast<nonconst_value_type&>(*old_value) = v;
+                *old_value = v;
+
+                typename cell_type::iterator
+                    i(find_in_cell(old_cell, old_value - particles_.begin()));
+                idx = *i;
+                erase_from_cell(old_cell, i);
+                push_into_cell(new_cell, idx);
+            }
+            else
+            {
+                idx = particles_.size();
+                particles_.push_back(v);
+                push_into_cell(new_cell, idx);
+                rmap_[v.first] = idx;
+            }
+            return particles_.begin() + idx;
+        }
+    }
+
+    inline std::pair<typename std::vector<particle_id_pair_type>::iterator, bool> update(
+        const particle_id_pair_type& v)
+    {
+        cell_type* new_cell(&cell(index(traits_type::get(v.second).position())));
+        typename std::vector<particle_id_pair_type>::iterator old_value(particles_.end());
+        cell_type* old_cell(0);
+
+        {
+            typename key_to_value_map_type::const_iterator i(rmap_.find(v.first));
+            if (i != rmap_.end())
+            {
+                old_value = particles_.begin() + (*i).second;
+                old_cell = &cell(index(traits_type::get(old_value->second).position()));
+            }
+        }
+
+        if (new_cell == old_cell)
+        {
+            // reinterpret_cast<nonconst_value_type&>(*old_value) = v;
+            *old_value = v;
+            // return std::pair<typename std::vector<particle_id_pair_type>::iterator, bool>(old_value, false);
+            return std::make_pair(old_value, false);
+        }
+        else
+        {
+            typename std::vector<particle_id_pair_type>::size_type idx(0);
+
+            if (old_cell)
+            {
+                // reinterpret_cast<nonconst_value_type&>(*old_value) = v;
+                *old_value = v;
+
+                typename cell_type::iterator
+                    i(find_in_cell(old_cell, old_value - particles_.begin()));
+                idx = *i;
+                erase_from_cell(old_cell, i);
+                push_into_cell(new_cell, idx);
+                return std::pair<typename std::vector<particle_id_pair_type>::iterator, bool>(
+                    particles_.begin() + idx, false);
+            }
+            else
+            {
+                idx = particles_.size();
+                particles_.push_back(v);
+                push_into_cell(new_cell, idx);
+                rmap_[v.first] = idx;
+                return std::pair<typename std::vector<particle_id_pair_type>::iterator, bool>(
+                    particles_.begin() + idx, true);
+            }
+        }
+    }
+
 protected:
 
     // inline cell_index_type index(const Real3& pos, double t = 1e-10) const

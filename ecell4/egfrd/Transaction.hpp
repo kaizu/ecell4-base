@@ -267,6 +267,29 @@ public:
         pc_.set_t(t);
     }
 
+    virtual typename traits_type::particle_space_traits_type::particle_id_pair_type const& get_particle_with_info(const particle_id_type& pid) const
+    {
+        return pc_.get_particle_with_info(pid);  // This is slow
+    }
+
+    virtual bool update_particle(typename traits_type::particle_space_traits_type::particle_id_pair_type const& p)
+    {
+        particle_id_type const& pid = p.first;
+        BOOST_ASSERT(removed_particles_.end() ==
+                removed_particles_.find(pid));
+        std::pair<typename particle_id_pair_set_type::iterator, bool> r(
+                orig_particles_.insert(particle_id_pair(
+                    pid, particle_type())));
+        if (r.second &&
+            added_particles_.end() == added_particles_.find(pid))
+        {
+            modified_particles_.push_no_duplicate(pid);
+            particle_type _v(pc_.get_particle(pid).second);
+            std::swap((*r.first).second, _v);
+        }
+        return pc_.update_particle(p);
+    }
+
 private:
     particle_id_pair get_original_particle(particle_id_type const& id) const
     {

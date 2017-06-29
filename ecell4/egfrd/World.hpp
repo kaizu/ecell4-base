@@ -131,7 +131,11 @@ struct WorldTraitsBase
 
     typedef struct
     {
-        typedef void* particle_info_type;
+        typedef struct {
+            size_type num_steps;
+        }
+        particle_info_type;
+
         typedef std::pair<ecell4::Particle, particle_info_type> particle_type;
         typedef std::pair<ecell4::ParticleID, particle_type> particle_id_pair_type;
 
@@ -145,7 +149,13 @@ struct WorldTraitsBase
             return std::make_pair(p.first, get(p.second));
         }
 
-        static particle_type as(ecell4::Particle const& p, particle_info_type const& pinfo = (void*)NULL)
+        static particle_type as(ecell4::Particle const& p)
+        {
+            particle_info_type pinfo;
+            return std::make_pair(p, pinfo);
+        }
+
+        static particle_type as(ecell4::Particle const& p, particle_info_type const& pinfo)
         {
             return std::make_pair(p, pinfo);
         }
@@ -159,6 +169,11 @@ struct WorldTraitsBase
         {
             BOOST_ASSERT(p.first == old.first);
             return std::make_pair(p.first, as(p.second, old.second.second));
+        }
+
+        static void propagate(rng_type& rng, particle_id_pair_type& old, time_type dt)
+        {
+            ++old.second.second.num_steps; // do nothing
         }
     }
     particle_space_traits_type;
@@ -853,6 +868,16 @@ public:
         const particle_id_type& ignore1, const particle_id_type& ignore2) const
     {
         return (*ps_).list_particles_within_radius(pos, radius, ignore1, ignore2);
+    }
+
+    typename particle_space_traits_type::particle_id_pair_type const& get_particle_with_info(const particle_id_type& pid) const
+    {
+        return (*ps_).get_particle_with_info(pid);
+    }
+
+    bool update_particle(typename particle_space_traits_type::particle_id_pair_type const& p)
+    {
+        return (*ps_).update_particle(p);
     }
 
     /**
