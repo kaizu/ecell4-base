@@ -693,6 +693,28 @@ cdef class EGFRDWorld:
         return GSLRandomNumberGenerator_from_Cpp_RandomNumberGenerator(
             self.thisptr.get().rng())
 
+    def get_particle_with_info(self, ParticleID pid):
+        """get_particle(pid) -> (ParticleID, Particle)
+
+        Return the particle associated a given ParticleID.
+
+        Parameters
+        ----------
+        pid : ParticleID
+            An id of the particle you want
+
+        Returns
+        -------
+        tuple:
+            A pair of ParticleID and Particle
+
+        """
+        cdef pair[Cpp_ParticleID, pair[Cpp_Particle, Cpp_ParticleInfo]] \
+            pid_particle_pair = self.thisptr.get().get_particle_with_info(deref(pid.thisptr))
+        return (ParticleID_from_Cpp_ParticleID(address(pid_particle_pair.first)),
+                (Particle_from_Cpp_Particle(address(pid_particle_pair.second.first)),
+                 dict(num_steps=pid_particle_pair.second.second.num_steps)))
+
 cdef EGFRDWorld EGFRDWorld_from_Cpp_EGFRDWorld(
     shared_ptr[Cpp_EGFRDWorld] w):
     r = EGFRDWorld(Real3(1, 1, 1))

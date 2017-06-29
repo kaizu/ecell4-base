@@ -23,6 +23,9 @@ cdef ReactionInfo ReactionInfo_from_Cpp_ReactionInfo(Cpp_ReactionInfo* ri)
 ## Cpp_EGFRDWorld
 #  ecell4::egfrd::EGFRDWorld
 cdef extern from "ecell4/egfrd/egfrd.hpp" namespace "ecell4::egfrd":
+    cdef cppclass Cpp_ParticleInfo "ecell4::egfrd::EGFRDWorld::particle_space_traits_type::particle_info_type":
+        unsigned int num_steps
+
     cdef cppclass Cpp_EGFRDWorld "ecell4::egfrd::EGFRDWorld":
         Cpp_EGFRDWorld() except +
         Cpp_EGFRDWorld(Cpp_Real3&) except +
@@ -70,6 +73,8 @@ cdef extern from "ecell4/egfrd/egfrd.hpp" namespace "ecell4::egfrd":
         void load(string filename) except +
         void bind_to(shared_ptr[Cpp_Model])
         shared_ptr[Cpp_RandomNumberGenerator] rng()
+
+        pair[Cpp_ParticleID, pair[Cpp_Particle, Cpp_ParticleInfo]] get_particle_with_info(Cpp_ParticleID& pid)
 
     cdef cppclass Cpp_EGFRDSimulator "ecell4::egfrd::EGFRDSimulator":
         #XXX: be carefull about the order of arguments
