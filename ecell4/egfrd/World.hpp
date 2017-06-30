@@ -138,6 +138,8 @@ struct WorldTraitsBase
 
         typedef std::pair<ecell4::Particle, particle_info_type> particle_type;
         typedef std::pair<ecell4::ParticleID, particle_type> particle_id_pair_type;
+        // typedef std::pair<ecell4::Particle const, particle_info_type> particle_type;
+        // typedef std::pair<ecell4::ParticleID const, particle_type> particle_id_pair_type;
 
         static ecell4::Particle const& get(particle_type const& v)
         {
@@ -171,24 +173,32 @@ struct WorldTraitsBase
             return std::make_pair(p.first, as(p.second, old.second.second));
         }
 
-        static void propagate(rng_type& rng, particle_id_pair_type& old, time_type dt)
+        static void propagate(rng_type& rng, particle_id_pair_type const& old, time_type dt)
         {
-            ++old.second.second.num_steps;
+            ++remove_const(old).num_steps;
         }
 
-        static void apply_a2b(rng_type& rng, particle_id_pair_type& old)
+        static void apply_first_order_reaction(rng_type& rng, particle_id_pair_type const& reactant, particle_id_pair_type const& product)
         {
-            ;  // do nothing
+            remove_const(product) = reactant.second.second;
         }
 
-        static boost::array<particle_type, 2> apply_a2bc(rng_type& rng, particle_id_pair_type const& old)
+        static void apply_first_order_reaction(rng_type& rng, particle_id_pair_type const& reactant, particle_id_pair_type& product0, particle_id_pair_type const& product1)
         {
-            return array_gen(old.second, old.second);
+            remove_const(product0) = reactant.second.second;
+            remove_const(product1) = reactant.second.second;
         }
 
-        static particle_type apply_ab2c(rng_type& rng, particle_id_pair_type const& old0, particle_id_pair_type const& old1)
+        static void apply_second_order_reaction(rng_type& rng, particle_id_pair_type const& reactant0, particle_id_pair_type const& reactant1, particle_id_pair_type const& product)
         {
-            return old0.second;
+            remove_const(product) = reactant0.second.second;
+        }
+
+    protected:
+
+        static particle_info_type& remove_const(particle_id_pair_type const& v)
+        {
+            return const_cast<particle_info_type&>(v.second.second);
         }
     }
     particle_space_traits_type;
