@@ -2103,14 +2103,24 @@ protected:
                 }
 
                 remove_domain(domain);
+
+                typename world_type::particle_space_traits_type::particle_id_pair_type pinfo = (*base_type::world_).get_particle_with_info(reactant.first);
+                world_type::particle_space_traits_type::apply_a2b(this->rng(), pinfo);
+
                 (*base_type::world_).remove_particle(reactant.first);
                 // particle_id_pair product(
                 //     (*base_type::world_).new_particle(
                 //         product_species.id(), reactant.second.position()).first);
+                // particle_id_pair product(
+                //     (*base_type::world_).new_particle(
+                //         product_id0, reactant.second.position()).first);
                 particle_id_pair product(
-                    (*base_type::world_).new_particle(
-                        product_id0, reactant.second.position()).first);
+                    world_type::particle_space_traits_type::get(
+                        (*base_type::world_).new_particle(
+                            product_id0, reactant.second.position(), pinfo.second.second).first));
+
                 boost::shared_ptr<single_type> new_domain(wrap_single(product));
+
                 if (base_type::rrec_)
                 {
                     // (*base_type::rrec_)(reaction_record_type(
@@ -2197,13 +2207,24 @@ protected:
                 }
 
                 remove_domain(domain);
+
+                boost::array<typename world_type::particle_space_traits_type::particle_type, 2> pinfo = world_type::particle_space_traits_type::apply_a2bc(this->rng(), (*base_type::world_).get_particle_with_info(reactant.first));
+
                 (*base_type::world_).remove_particle(reactant.first);
 
+                // particle_id_pair const pp[] = {
+                //     (*base_type::world_).new_particle(
+                //         product_id0, new_p[0].position()).first,
+                //     (*base_type::world_).new_particle(
+                //         product_id1, new_p[1].position()).first
+                // };
                 particle_id_pair const pp[] = {
-                    (*base_type::world_).new_particle(
-                        product_id0, new_p[0].position()).first,
-                    (*base_type::world_).new_particle(
-                        product_id1, new_p[1].position()).first
+                    world_type::particle_space_traits_type::get(
+                        (*base_type::world_).new_particle(
+                            product_id0, new_p[0].position(), pinfo[0].second).first),
+                    world_type::particle_space_traits_type::get(
+                        (*base_type::world_).new_particle(
+                            product_id1, new_p[1].position(), pinfo[1].second).first)
                 };
                 // create domains for two particles and add them to
                 // the event queue
@@ -3342,12 +3363,20 @@ protected:
                                 new_com) + new_species.radius
                             < shape(domain.shell().second).radius());
 
+                        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo0 = (*base_type::world_).get_particle_with_info(domain.particles()[0].first);
+                        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = (*base_type::world_).get_particle_with_info(domain.particles()[1].first);
+                        typename world_type::particle_space_traits_type::particle_type pinfo = world_type::particle_space_traits_type::apply_ab2c(this->rng(), pinfo0, pinfo1);
+
                         (*base_type::world_).remove_particle(domain.particles()[0].first);
                         (*base_type::world_).remove_particle(domain.particles()[1].first);
 
+                        // particle_id_pair const new_particle(
+                        //     (*base_type::world_).new_particle(
+                        //         new_species_id, new_com).first);
                         particle_id_pair const new_particle(
-                            (*base_type::world_).new_particle(
-                                new_species_id, new_com).first);
+                            world_type::particle_space_traits_type::get(
+                                (*base_type::world_).new_particle(
+                                    new_species_id, new_com, pinfo.second).first));
 
                         boost::shared_ptr<single_type> new_single(
                             wrap_single(new_particle));

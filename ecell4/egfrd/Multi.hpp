@@ -252,7 +252,29 @@ public:
 
     virtual bool update_particle(typename traits_type::particle_space_traits_type::particle_id_pair_type const& p)
     {
-        return world_.update_particle(p);
+        particle_id_type const& pid = p.first;
+
+        world_.update_particle(p);
+
+        typename particle_map::iterator const i(particles_.find(pid));
+        if (i != particles_.end())
+        {
+            (*i).second = traits_type::particle_space_traits_type::get(p.second);
+            return false;
+        }
+        else
+        {
+            particles_.insert(i, traits_type::particle_space_traits_type::get(p));
+            return true;
+        }
+    }
+
+    virtual std::pair<typename traits_type::particle_space_traits_type::particle_id_pair_type, bool>
+    new_particle(const species_id_type& sp, const position_type& pos, typename traits_type::particle_space_traits_type::particle_info_type const& p)
+    {
+        std::pair<typename traits_type::particle_space_traits_type::particle_id_pair_type, bool> const retval(world_.new_particle(sp, pos, p));
+        particles_.insert(traits_type::particle_space_traits_type::get(retval.first));
+        return retval;
     }
 
 private:
