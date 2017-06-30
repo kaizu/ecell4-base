@@ -713,7 +713,7 @@ cdef class EGFRDWorld:
             pid_particle_pair = self.thisptr.get().get_particle_with_info(deref(pid.thisptr))
         return (ParticleID_from_Cpp_ParticleID(address(pid_particle_pair.first)),
                 (Particle_from_Cpp_Particle(address(pid_particle_pair.second.first)),
-                 dict(num_steps=pid_particle_pair.second.second.num_steps)))
+                 dict(num_steps=pid_particle_pair.second.second.num_steps, t=pid_particle_pair.second.second.t)))
 
 cdef EGFRDWorld EGFRDWorld_from_Cpp_EGFRDWorld(
     shared_ptr[Cpp_EGFRDWorld] w):

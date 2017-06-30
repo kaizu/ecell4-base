@@ -133,6 +133,7 @@ struct WorldTraitsBase
     {
         typedef struct {
             size_type num_steps;
+            time_type t;
         }
         particle_info_type;
 
@@ -154,6 +155,8 @@ struct WorldTraitsBase
         static particle_type as(ecell4::Particle const& p)
         {
             particle_info_type pinfo;
+            pinfo.num_steps = 0;
+            pinfo.t = 0.0;
             return std::make_pair(p, pinfo);
         }
 
@@ -176,6 +179,7 @@ struct WorldTraitsBase
         static void propagate(rng_type& rng, particle_id_pair_type const& old, time_type dt)
         {
             ++remove_const(old).num_steps;
+            remove_const(old).t += dt;
         }
 
         static void apply_first_order_reaction(rng_type& rng, particle_id_pair_type const& reactant, particle_id_pair_type const& product)
@@ -183,7 +187,7 @@ struct WorldTraitsBase
             remove_const(product) = reactant.second.second;
         }
 
-        static void apply_first_order_reaction(rng_type& rng, particle_id_pair_type const& reactant, particle_id_pair_type& product0, particle_id_pair_type const& product1)
+        static void apply_first_order_reaction(rng_type& rng, particle_id_pair_type const& reactant, particle_id_pair_type const& product0, particle_id_pair_type const& product1)
         {
             remove_const(product0) = reactant.second.second;
             remove_const(product1) = reactant.second.second;

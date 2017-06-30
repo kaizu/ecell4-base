@@ -1571,6 +1571,8 @@ protected:
             new spherical_single_type(did, p, shell));
         domain_kind const kind = SPHERICAL_SINGLE;
 
+        (*new_single).last_time() = this->t();
+
         domains_.insert(std::make_pair(did, new_single));
         ++domain_count_per_type_[kind];
         return new_single;
