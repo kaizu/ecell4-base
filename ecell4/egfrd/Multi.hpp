@@ -269,13 +269,13 @@ public:
         }
     }
 
-    virtual std::pair<typename traits_type::particle_space_traits_type::particle_id_pair_type, bool>
-    new_particle(const species_id_type& sp, const position_type& pos, typename traits_type::particle_space_traits_type::particle_info_type const& p)
-    {
-        std::pair<typename traits_type::particle_space_traits_type::particle_id_pair_type, bool> const retval(world_.new_particle(sp, pos, p));
-        particles_.insert(traits_type::particle_space_traits_type::get(retval.first));
-        return retval;
-    }
+    // virtual std::pair<typename traits_type::particle_space_traits_type::particle_id_pair_type, bool>
+    // new_particle(const species_id_type& sp, const position_type& pos, typename traits_type::particle_space_traits_type::particle_info_type const& p)
+    // {
+    //     std::pair<typename traits_type::particle_space_traits_type::particle_id_pair_type, bool> const retval(world_.new_particle(sp, pos, p));
+    //     particles_.insert(traits_type::particle_space_traits_type::get(retval.first));
+    //     return retval;
+    // }
 
 private:
     world_type& world_;

@@ -139,7 +139,7 @@ public:
 
     virtual bool update_particle(typename traits_type::particle_space_traits_type::particle_id_pair_type const& p) = 0;
 
-    virtual std::pair<typename traits_type::particle_space_traits_type::particle_id_pair_type, bool> new_particle(const species_id_type& sp, const position_type& pos, typename traits_type::particle_space_traits_type::particle_info_type const& p) = 0;
+    // virtual std::pair<typename traits_type::particle_space_traits_type::particle_id_pair_type, bool> new_particle(const species_id_type& sp, const position_type& pos, typename traits_type::particle_space_traits_type::particle_info_type const& p) = 0;
 };
 
 

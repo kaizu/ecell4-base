@@ -905,36 +905,36 @@ public:
         return (*ps_).update_particle(p);
     }
 
-    std::pair<typename particle_space_traits_type::particle_id_pair_type, bool>
-    new_particle(const ecell4::Species& sp, const position_type& pos, typename particle_space_traits_type::particle_info_type const& p)
-    {
-        const species_id_type sid(sp.serial());
-        typename molecule_info_map::const_iterator i(molecule_info_map_.find(sid));
-        molecule_info_type const minfo(
-            i != molecule_info_map_.end() ? (*i).second : get_molecule_info(sp));
-        return new_particle(
-            particle_space_traits_type::as(particle_type(sid, pos, minfo.radius, minfo.D), p));
-    }
+    // std::pair<typename particle_space_traits_type::particle_id_pair_type, bool>
+    // new_particle(const ecell4::Species& sp, const position_type& pos, typename particle_space_traits_type::particle_info_type const& p)
+    // {
+    //     const species_id_type sid(sp.serial());
+    //     typename molecule_info_map::const_iterator i(molecule_info_map_.find(sid));
+    //     molecule_info_type const minfo(
+    //         i != molecule_info_map_.end() ? (*i).second : get_molecule_info(sp));
+    //     return new_particle(
+    //         particle_space_traits_type::as(particle_type(sid, pos, minfo.radius, minfo.D), p));
+    // }
 
-    std::pair<typename particle_space_traits_type::particle_id_pair_type, bool>
-    new_particle(typename particle_space_traits_type::particle_type const& v)
-    {
-        const particle_type& p = particle_space_traits_type::get(v);
-        const particle_id_pair_and_distance_list overlapped(
-            check_overlap(
-                particle_shape_type(p.position(), p.radius())));
-        if (overlapped.size() > 0)
-        {
-            return std::make_pair(std::make_pair(pidgen_(), v), false);
-            // return std::make_pair(std::make_pair(particle_id_type(), p), false);
-        }
-        else
-        {
-            const particle_id_type pid = pidgen_();
-            typename particle_space_traits_type::particle_id_pair_type const v_(std::make_pair(pid, v));
-            return std::make_pair(v_, update_particle(v_));
-        }
-    }
+    // std::pair<typename particle_space_traits_type::particle_id_pair_type, bool>
+    // new_particle(typename particle_space_traits_type::particle_type const& v)
+    // {
+    //     const particle_type& p = particle_space_traits_type::get(v);
+    //     const particle_id_pair_and_distance_list overlapped(
+    //         check_overlap(
+    //             particle_shape_type(p.position(), p.radius())));
+    //     if (overlapped.size() > 0)
+    //     {
+    //         return std::make_pair(std::make_pair(pidgen_(), v), false);
+    //         // return std::make_pair(std::make_pair(particle_id_type(), p), false);
+    //     }
+    //     else
+    //     {
+    //         const particle_id_type pid = pidgen_();
+    //         typename particle_space_traits_type::particle_id_pair_type const v_(std::make_pair(pid, v));
+    //         return std::make_pair(v_, update_particle(v_));
+    //     }
+    // }
 
     /**
      * wrappers
