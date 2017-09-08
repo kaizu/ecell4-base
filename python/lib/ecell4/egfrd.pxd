@@ -26,6 +26,8 @@ cdef extern from "ecell4/egfrd/egfrd.hpp" namespace "ecell4::egfrd":
     cdef cppclass Cpp_ParticleInfo "ecell4::egfrd::EGFRDWorld::particle_space_traits_type::particle_info_type":
         unsigned int num_steps
         double t
+        double theta
+        double phi
 
     cdef cppclass Cpp_EGFRDWorld "ecell4::egfrd::EGFRDWorld":
         Cpp_EGFRDWorld() except +
