@@ -2117,7 +2117,7 @@ protected:
                         product_id0, reactant.second.position()).first);
 
                 typename world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = (*base_type::world_).get_particle_with_info(product.first);
-                world_type::particle_space_traits_type::apply_first_order_reaction(this->rng(), pinfo0, pinfo1);
+                world_type::particle_space_traits_type::apply_first_order_reaction(this->rng(), pinfo0, pinfo1, product_species);
                 (*base_type::world_).update_particle(pinfo1);
 
                 boost::shared_ptr<single_type> new_domain(wrap_single(product));
@@ -2222,7 +2222,7 @@ protected:
 
                 typename world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = (*base_type::world_).get_particle_with_info(pp[0].first);
                 typename world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = (*base_type::world_).get_particle_with_info(pp[1].first);
-                world_type::particle_space_traits_type::apply_first_order_reaction(this->rng(), pinfo0, pinfo1, pinfo2);
+                world_type::particle_space_traits_type::apply_first_order_reaction(this->rng(), pinfo0, pinfo1, product_species[0], pinfo2, product_species[1]);
                 (*base_type::world_).update_particle(pinfo1);
                 (*base_type::world_).update_particle(pinfo2);
 
@@ -3374,7 +3374,7 @@ protected:
                                 new_species_id, new_com).first);
 
                         typename world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = (*base_type::world_).get_particle_with_info(new_particle.first);
-                        world_type::particle_space_traits_type::apply_second_order_reaction(this->rng(), pinfo0, pinfo1, pinfo2);
+                        world_type::particle_space_traits_type::apply_second_order_reaction(this->rng(), pinfo0, pinfo1, pinfo2, new_species);
                         (*base_type::world_).update_particle(pinfo2);
 
                         boost::shared_ptr<single_type> new_single(

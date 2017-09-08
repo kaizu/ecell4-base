@@ -235,7 +235,7 @@ private:
                         typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type const pinfo0 = tx_.get_particle_with_info(pp.first);
                         tx_.update_particle(new_p.first, new_p.second);
                         typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = tx_.get_particle_with_info(new_p.first);
-                        traits_type::world_type::particle_space_traits_type::apply_first_order_reaction(rng_, pinfo0, pinfo1);
+                        traits_type::world_type::particle_space_traits_type::apply_first_order_reaction(rng_, pinfo0, pinfo1, s0);
                         tx_.update_particle(pinfo1);
 
                         if (rrec_)
@@ -302,7 +302,7 @@ private:
 
                         typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = tx_.get_particle_with_info(npp0.first);
                         typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = tx_.get_particle_with_info(npp1.first);
-                        traits_type::world_type::particle_space_traits_type::apply_first_order_reaction(rng_, pinfo0, pinfo1, pinfo2);
+                        traits_type::world_type::particle_space_traits_type::apply_first_order_reaction(rng_, pinfo0, pinfo1, s0, pinfo2, s1);
                         tx_.update_particle(pinfo2);
                         tx_.update_particle(pinfo2);
 
@@ -403,7 +403,7 @@ private:
                         particle_id_pair npp(tx_.new_particle(product, new_pos).first);
 
                         typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = tx_.get_particle_with_info(npp.first);
-                        traits_type::world_type::particle_space_traits_type::apply_second_order_reaction(rng_, pinfo0, pinfo1, pinfo2);
+                        traits_type::world_type::particle_space_traits_type::apply_second_order_reaction(rng_, pinfo0, pinfo1, pinfo2, sp);
                         tx_.update_particle(pinfo2);
 
                         if (rrec_)

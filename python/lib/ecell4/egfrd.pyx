@@ -716,7 +716,8 @@ cdef class EGFRDWorld:
                  dict(num_steps=pid_particle_pair.second.second.num_steps,
                       t=pid_particle_pair.second.second.t,
                       theta=pid_particle_pair.second.second.theta,
-                      phi=pid_particle_pair.second.second.phi)))
+                      phi=pid_particle_pair.second.second.phi,
+                      Drot=pid_particle_pair.second.second.Drot)))
 
 cdef EGFRDWorld EGFRDWorld_from_Cpp_EGFRDWorld(
     shared_ptr[Cpp_EGFRDWorld] w):

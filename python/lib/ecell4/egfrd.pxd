@@ -28,6 +28,7 @@ cdef extern from "ecell4/egfrd/egfrd.hpp" namespace "ecell4::egfrd":
         double t
         double theta
         double phi
+        double Drot
 
     cdef cppclass Cpp_EGFRDWorld "ecell4::egfrd::EGFRDWorld":
         Cpp_EGFRDWorld() except +

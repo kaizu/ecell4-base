@@ -109,6 +109,7 @@ struct WorldTraitsBase
         const ecell4::Real radius;
         const ecell4::Real D;
         const std::string structure_id;
+        const ecell4::Real Drot;
     };
 
     typedef MoleculeInfo molecule_info_type;
@@ -129,92 +130,6 @@ struct WorldTraitsBase
     static const Real tolerance();
     static const Real TOLERANCE;
 
-    // typedef struct
-    // {
-    //     typedef struct {
-    //         size_type num_steps;
-    //         time_type t;
-    //     }
-    //     particle_info_type;
-
-    //     typedef std::pair<ecell4::Particle, particle_info_type> particle_type;
-    //     typedef std::pair<ecell4::ParticleID, particle_type> particle_id_pair_type;
-    //     // typedef std::pair<ecell4::Particle const, particle_info_type> particle_type;
-    //     // typedef std::pair<ecell4::ParticleID const, particle_type> particle_id_pair_type;
-
-    //     static ecell4::Particle const& get(particle_type const& v)
-    //     {
-    //         return v.first;
-    //     }
-
-    //     static std::pair<ecell4::ParticleID, ecell4::Particle> get(particle_id_pair_type const& p)
-    //     {
-    //         return std::make_pair(p.first, get(p.second));
-    //     }
-
-    //     static particle_type as(ecell4::Particle const& p)
-    //     {
-    //         particle_info_type pinfo;
-    //         pinfo.num_steps = 0;
-    //         pinfo.t = 0.0;
-    //         return std::make_pair(p, pinfo);
-    //     }
-
-    //     static particle_type as(ecell4::Particle const& p, particle_info_type const& pinfo)
-    //     {
-    //         return std::make_pair(p, pinfo);
-    //     }
-
-    //     static particle_id_pair_type as(std::pair<ecell4::ParticleID, ecell4::Particle> const& p)
-    //     {
-    //         return std::make_pair(p.first, as(p.second));
-    //     }
-
-    //     static particle_id_pair_type as(
-    //         std::pair<ecell4::ParticleID, ecell4::Particle> const& p, particle_id_pair_type const& old)
-    //     {
-    //         BOOST_ASSERT(p.first == old.first);
-    //         return std::make_pair(p.first, as(p.second, old.second.second));
-    //     }
-
-    //     static void propagate(rng_type& rng, particle_id_pair_type const& old, time_type dt)
-    //     {
-    //         ++remove_const(old).num_steps;
-    //         remove_const(old).t += dt;
-    //     }
-
-    //     static void apply_first_order_reaction(
-    //         rng_type& rng, particle_id_pair_type const& reactant, particle_id_pair_type const& product)
-    //     {
-    //         remove_const(product) = reactant.second.second;
-    //     }
-
-    //     static void apply_first_order_reaction(
-    //         rng_type& rng,
-    //         particle_id_pair_type const& reactant,
-    //         particle_id_pair_type const& product0, particle_id_pair_type const& product1)
-    //     {
-    //         remove_const(product0) = reactant.second.second;
-    //         remove_const(product1) = reactant.second.second;
-    //     }
-
-    //     static void apply_second_order_reaction(
-    //         rng_type& rng,
-    //         particle_id_pair_type const& reactant0, particle_id_pair_type const& reactant1,
-    //         particle_id_pair_type const& product)
-    //     {
-    //         remove_const(product) = reactant0.second.second;
-    //     }
-
-    // private:
-
-    //     static particle_info_type& remove_const(particle_id_pair_type const& v)
-    //     {
-    //         return const_cast<particle_info_type&>(v.second.second);
-    //     }
-    // }
-    // particle_space_traits_type;
-
     typedef struct
     {
         typedef struct {
@@ -222,6 +137,7 @@ struct WorldTraitsBase
             time_type t;
             length_type theta;  // the azimuthal angle
             length_type phi; // the polar angle
+            length_type Drot;
         }
         particle_info_type;
 
@@ -247,6 +163,7 @@ struct WorldTraitsBase
             pinfo.t = 0.0;
             pinfo.theta = 0.0;
             pinfo.phi = 0.0;
+            pinfo.Drot = 0.0;
             return std::make_pair(p, pinfo);
         }
 
@@ -266,14 +183,57 @@ struct WorldTraitsBase
             BOOST_ASSERT(p.first == old.first);
             return std::make_pair(p.first, as(p.second, old.second.second));
         }
+    }
+    particle_space_traits_type;
 
-        static particle_type as(rng_type& rng, ecell4::Particle const& p)
+    typedef struct
+    {
+        typedef particle_space_traits_type traits_type;
+        typedef typename traits_type::particle_info_type particle_info_type;
+        typedef typename traits_type::particle_type particle_type;
+        typedef typename traits_type::particle_id_pair_type particle_id_pair_type;
+
+        static ecell4::Particle const& get(particle_type const& v)
         {
+            return traits_type::get(v);
+        }
+
+        static std::pair<ecell4::ParticleID, ecell4::Particle> get(particle_id_pair_type const& p)
+        {
+            return traits_type::get(p);
+        }
+
+        static particle_type as(ecell4::Particle const& p)
+        {
+            std::cout << "particle_space_traits_type::as(Particle) is called" << std::endl;
+            return traits_type::as(p);
+        }
+
+        static particle_type as(ecell4::Particle const& p, particle_info_type const& pinfo)
+        {
+            return traits_type::as(p, pinfo);
+        }
+
+        static particle_id_pair_type as(std::pair<ecell4::ParticleID, ecell4::Particle> const& p)
+        {
+            return traits_type::as(p);
+        }
+
+        static particle_id_pair_type as(
+            std::pair<ecell4::ParticleID, ecell4::Particle> const& p, particle_id_pair_type const& old)
+        {
+            return traits_type::as(p, old);
+        }
+
+        static particle_type as(rng_type& rng, ecell4::Particle const& p, molecule_info_type const& minfo)
+        {
+            std::cout << "particle_space_traits_type::as(rng_type, Particle) is called" << std::endl;
             particle_info_type pinfo;
             pinfo.num_steps = 0;
             pinfo.t = 0.0;
             pinfo.theta = rng.uniform(0.0, M_PI);
             pinfo.phi = rng.uniform(-M_PI, M_PI);
+            pinfo.Drot = minfo.Drot;
             return std::make_pair(p, pinfo);
         }
 
@@ -282,16 +242,15 @@ struct WorldTraitsBase
             ++remove_const(old).num_steps;
             remove_const(old).t += dt;
 
-            const length_type Drot = 1e+5;  //XXX: USER_DEFINED_PARAMETER
-
-            const length_type dthetasq = abs(rng.gaussian(sqrt(2 * Drot * dt)));
+            const particle_info_type& pinfo = old.second.second;
+            const length_type dthetasq = abs(rng.gaussian(sqrt(2 * pinfo.Drot * dt)));
             const length_type dtheta = fmod(sqrt(dthetasq), M_PI);
             const length_type dphi = rng.uniform(-M_PI, M_PI);
 
-            const length_type sin_theta = sin(old.second.second.theta);
-            const length_type cos_theta = cos(old.second.second.theta);
-            const length_type sin_phi = sin(old.second.second.phi);
-            const length_type cos_phi = cos(old.second.second.phi);
+            const length_type sin_theta = sin(pinfo.theta);
+            const length_type cos_theta = cos(pinfo.theta);
+            const length_type sin_phi = sin(pinfo.phi);
+            const length_type cos_phi = cos(pinfo.phi);
             const length_type sin_dtheta = sin(dtheta);
             const length_type cos_dtheta = cos(dtheta);
             const length_type sin_dphi = sin(dphi);
@@ -311,7 +270,8 @@ struct WorldTraitsBase
         }
 
         static void apply_first_order_reaction(
-            rng_type& rng, particle_id_pair_type const& reactant, particle_id_pair_type const& product)
+            rng_type& rng, particle_id_pair_type const& reactant,
+            particle_id_pair_type const& product, molecule_info_type const& minfo)
         {
             remove_const(product) = reactant.second.second;
         }
@@ -319,7 +279,8 @@ struct WorldTraitsBase
         static void apply_first_order_reaction(
             rng_type& rng,
             particle_id_pair_type const& reactant,
-            particle_id_pair_type const& product0, particle_id_pair_type const& product1)
+            particle_id_pair_type const& product0, molecule_info_type const& minfo0,
+            particle_id_pair_type const& product1, molecule_info_type const& minfo1)
         {
             remove_const(product0) = reactant.second.second;
             remove_const(product1) = reactant.second.second;
@@ -328,7 +289,7 @@ struct WorldTraitsBase
         static void apply_second_order_reaction(
             rng_type& rng,
             particle_id_pair_type const& reactant0, particle_id_pair_type const& reactant1,
-            particle_id_pair_type const& product)
+            particle_id_pair_type const& product, molecule_info_type const& minfo)
         {
             remove_const(product) = reactant0.second.second;
         }
@@ -340,7 +301,7 @@ struct WorldTraitsBase
             return const_cast<particle_info_type&>(v.second.second);
         }
     }
-    particle_space_traits_type;
+    particle_info_traits_type;
 };
 
 template<typename Tderived_, typename TD_>
@@ -486,8 +447,10 @@ public:
      * ParticleContainerBase
      */
 
-    typedef typename traits_type::particle_space_traits_type particle_space_traits_type;
-    typedef typename ecell4::ParticleSpaceNewCellListImpl<particle_space_traits_type> particle_space_type;
+    //XXX: typedef typename traits_type::particle_space_traits_type particle_space_traits_type;
+    //XXX: typedef typename ecell4::ParticleSpaceNewCellListImpl<particle_space_traits_type> particle_space_type;
+    typedef typename traits_type::particle_info_traits_type particle_space_traits_type;
+    typedef typename ecell4::ParticleSpaceNewCellListImpl<typename particle_space_traits_type::traits_type> particle_space_type;
     // typedef ecell4::ParticleSpaceCellListImpl particle_space_type;
 
     typedef typename base_type::transaction_type transaction_type;
@@ -789,7 +752,7 @@ public:
         }
 
         // const Real3 edge_lengths((*this).edge_lengths());
-        const molecule_info_type info((*this).get_molecule_info(sp));
+        const molecule_info_type minfo((*this).get_molecule_info(sp));
         boost::shared_ptr<ecell4::Shape> shape(new ecell4::AABB(position_type(0, 0, 0), (*this).edge_lengths()));
 
         for (int i(0); i < num; ++i)
@@ -797,9 +760,9 @@ public:
             while (true)
             {
                 const position_type pos(shape->draw_position(rng_));
-                const particle_type p(sp, pos, info.radius, info.D);
+                const particle_type p(sp, pos, minfo.radius, minfo.D);
                 const typename particle_space_traits_type::particle_type
-                    pinfo(particle_space_traits_type::as(*rng_, p));
+                    pinfo(particle_space_traits_type::as(*rng_, p, minfo));
                 // const typename particle_space_traits_type::particle_type
                 //     pinfo(particle_space_traits_type::as(p));
                 if ((*this).new_particle(pinfo).second)
@@ -849,37 +812,49 @@ public:
      */
     molecule_info_type get_molecule_info(ecell4::Species const& sp) const
     {
-        ecell4::Real radius(0.0), D(0.0);
-        std::string structure_id("world");
+        Real radius = 0.0;
+        Real D = 0.0;
+        std::string structure_id = "world";
+        Real Drot = 0.0;
 
-        if (sp.has_attribute("radius") && sp.has_attribute("D"))
+        if (sp.has_attribute("radius"))
         {
+            // enough information in the given Species
             radius = sp.get_attribute_as<Real>("radius");
-            D = sp.get_attribute_as<Real>("D");
+
+            if (sp.has_attribute("D"))
+                D = sp.get_attribute_as<Real>("D");
             if (sp.has_attribute("structure_id"))
-            {
                 structure_id = sp.get_attribute_as<std::string>("structure_id");
-            }
+            if (sp.has_attribute("Drot"))
+                Drot = sp.get_attribute_as<Real>("Drot");
         }
         else if (boost::shared_ptr<model_type> bound_model = lock_model())
         {
+            // not enough. ask the model
             ecell4::Species newsp(bound_model->apply_species_attributes(sp));
 
-            if (newsp.has_attribute("radius")
-                && newsp.has_attribute("D"))
-            {
+            if (newsp.has_attribute("D"))
                 radius = newsp.get_attribute_as<Real>("radius");
-                D = newsp.get_attribute_as<Real>("D");
-            }
+            // else
+            //     throw NotFound("radius is required.");
 
+            if (newsp.has_attribute("D"))
+                D = newsp.get_attribute_as<Real>("D");
             if (newsp.has_attribute("structure_id"))
-            {
                 structure_id = newsp.get_attribute_as<std::string>("structure_id");
-            }
+            if (newsp.has_attribute("Drot"))
+                Drot = newsp.get_attribute_as<Real>("Drot");
+        }
+        else
+        {
+            ; // throw NotFound("radius is required.");
         }
 
-        molecule_info_type info = {radius, D, structure_id};
-        return info;
+        const molecule_info_type minfo = {
+            radius, D, structure_id, Drot
+            };
+        return minfo;
     }
 
 protected:
