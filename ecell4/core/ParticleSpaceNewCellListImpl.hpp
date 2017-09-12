@@ -196,30 +196,7 @@ public:
         return (*i);
     }
 
-    bool update_particle(particle_id_pair_type const& p)
-    {
-        ParticleID const& pid = p.first;
-        Particle const& p1 = traits_type::get(p.second);
-        typename std::vector<particle_id_pair_type>::iterator i(find(pid));
-        if (i != particles_.end())
-        {
-            Particle const& p0(traits_type::get((*i).second));
-            if (p0.species() != p1.species())
-            {
-                particle_pool_[p0.species_serial()].erase((*i).first);
-                particle_pool_[p1.species_serial()].insert(pid);
-            }
-            this->update(i, p);
-            return false;
-        }
-
-        this->update(p);
-        // const bool succeeded(this->update(std::make_pair(pid, p)).second);
-        // BOOST_ASSERT(succeeded);
-
-        particle_pool_[p1.species_serial()].insert(pid);
-        return true;
-    }
+    bool update_particle(particle_id_pair_type const& p);
 
 protected:
 
@@ -672,6 +649,33 @@ void ParticleSpaceNewCellListImpl<Ttraits_>::reset(const Real3& edge_lengths)
 
     edge_lengths_ = edge_lengths;
     // throw NotImplemented("Not implemented yet.");
+}
+
+template <typename Ttraits_>
+bool ParticleSpaceNewCellListImpl<Ttraits_>::update_particle(
+    particle_id_pair_type const& p)
+{
+    ParticleID const& pid = p.first;
+    Particle const& p1 = traits_type::get(p.second);
+    typename std::vector<particle_id_pair_type>::iterator i(find(pid));
+    if (i != particles_.end())
+    {
+        Particle const& p0(traits_type::get((*i).second));
+        if (p0.species() != p1.species())
+        {
+            particle_pool_[p0.species_serial()].erase((*i).first);
+            particle_pool_[p1.species_serial()].insert(pid);
+        }
+        this->update(i, p);
+        return false;
+    }
+
+    this->update(p);
+    // const bool succeeded(this->update(std::make_pair(pid, p)).second);
+    // BOOST_ASSERT(succeeded);
+
+    particle_pool_[p1.species_serial()].insert(pid);
+    return true;
 }
 
 template <typename Ttraits_>

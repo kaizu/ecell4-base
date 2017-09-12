@@ -205,7 +205,7 @@ struct WorldTraitsBase
 
         static particle_type as(ecell4::Particle const& p)
         {
-            std::cout << "particle_space_traits_type::as(Particle) is called" << std::endl;
+            // std::cout << "particle_space_traits_type::as(Particle) is called" << std::endl;
             return traits_type::as(p);
         }
 
@@ -227,7 +227,7 @@ struct WorldTraitsBase
 
         static particle_type as(rng_type& rng, ecell4::Particle const& p, molecule_info_type const& minfo)
         {
-            std::cout << "particle_space_traits_type::as(rng_type, Particle) is called" << std::endl;
+            // std::cout << "particle_space_traits_type::as(rng_type, Particle) is called" << std::endl;
             particle_info_type pinfo;
             pinfo.num_steps = 0;
             pinfo.t = 0.0;
@@ -243,6 +243,11 @@ struct WorldTraitsBase
             remove_const(old).t += dt;
 
             const particle_info_type& pinfo = old.second.second;
+            if (pinfo.Drot == 0.0)
+            {
+                return;
+            }
+
             const length_type dthetasq = abs(rng.gaussian(sqrt(2 * pinfo.Drot * dt)));
             const length_type dtheta = fmod(sqrt(dthetasq), M_PI);
             const length_type dphi = rng.uniform(-M_PI, M_PI);
@@ -265,6 +270,8 @@ struct WorldTraitsBase
                 pos1[0] * cos_theta * sin_phi + pos1[2] * sin_theta * sin_phi + pos1[1] * cos_phi,
                 pos1[2] * cos_theta - pos1[0] * sin_theta);
 
+            // const position_type pos2(draw_rotational_vector(rng, dtheta, cos_theta, cos_phi));
+
             remove_const(old).theta = acos(pos2[2]);
             remove_const(old).phi = atan2(pos2[1], pos2[0]);
         }
@@ -274,6 +281,7 @@ struct WorldTraitsBase
             particle_id_pair_type const& product, molecule_info_type const& minfo)
         {
             remove_const(product) = reactant.second.second;
+            remove_const(product).Drot = minfo.Drot;
         }
 
         static void apply_first_order_reaction(
@@ -282,8 +290,26 @@ struct WorldTraitsBase
             particle_id_pair_type const& product0, molecule_info_type const& minfo0,
             particle_id_pair_type const& product1, molecule_info_type const& minfo1)
         {
+            // std::cout << "particle_space_traits_type::apply_first_order_reaction(...) is called " << minfo0.Drot << ", " << minfo1.Drot << std::endl;
+
+            // {
+            //     position_type const ipv(
+            //         normalize(get(product1.second).position() - get(product0.second).position()));
+
+            //     const particle_info_type& pinfo = reactant.second.second;
+            //     const position_type pos(
+            //         draw_rotational_vector(
+            //             rng, pinfo.theta, ipv[2],
+            //             (ipv[2] != 0.0 ? ipv[0] / sqrt(1 - ipv[2] * ipv[2]) : 1.0)));
+
+            //     remove_const(product0).theta = acos(pos[2]);
+            //     remove_const(product0).phi = atan2(pos[1], pos[0]);
+            // }
+
             remove_const(product0) = reactant.second.second;
+            remove_const(product0).Drot = minfo0.Drot;
             remove_const(product1) = reactant.second.second;
+            remove_const(product1).Drot = minfo1.Drot;
         }
 
         static void apply_second_order_reaction(
@@ -291,7 +317,29 @@ struct WorldTraitsBase
             particle_id_pair_type const& reactant0, particle_id_pair_type const& reactant1,
             particle_id_pair_type const& product, molecule_info_type const& minfo)
         {
+            // std::cout << "particle_space_traits_type::apply_second_order_reaction(...) is called " << std::endl;
+
+            // {
+            //     position_type const ipv(
+            //         get(reactant1.second).position() - get(reactant0.second).position());
+
+            //     const particle_info_type& pinfo = reactant0.second.second;
+            //     const length_type sin_theta = sin(pinfo.theta);
+            //     const length_type cos_theta = cos(pinfo.theta);
+            //     const length_type sin_phi = sin(pinfo.phi);
+            //     const length_type cos_phi = cos(pinfo.phi);
+            //     position_type const direction(
+            //         cos_phi * sin_theta, sin_phi * sin_theta, cos_theta);
+
+            //     length_type const cos_dtheta(dot_product(ipv, direction) / length(ipv));
+            //     length_type const dtheta = acos(cos_dtheta);
+
+            //     remove_const(product).theta = dtheta;
+            //     remove_const(product).phi = 0.0;
+            // }
+
             remove_const(product) = reactant0.second.second;
+            remove_const(product).Drot = minfo.Drot;
         }
 
     private:
@@ -300,6 +348,31 @@ struct WorldTraitsBase
         {
             return const_cast<particle_info_type&>(v.second.second);
         }
+
+        // static position_type draw_rotational_vector(
+        //     rng_type& rng, Real const& dtheta, Real const& cos_theta, Real const& cos_phi)
+        // {
+        //     // const length_type cos_theta = pos0[2];
+        //     // const length_type cos_phi = (cos_theta != 1 ? pos0[0] / sin_theta : 1);
+        //     const length_type sin_theta = sqrt(1 - cos_theta * cos_theta);
+        //     const length_type sin_phi = sqrt(1 - cos_phi * cos_phi);
+
+        //     const length_type dphi = rng.uniform(-M_PI, M_PI);
+
+        //     const length_type sin_dtheta = sin(dtheta);
+        //     const length_type cos_dtheta = cos(dtheta);
+        //     const length_type sin_dphi = sin(dphi);
+        //     const length_type cos_dphi = cos(dphi);
+        //     const position_type pos1(
+        //         sin_dtheta * sin_dphi,
+        //         sin_dtheta * cos_dphi,
+        //         cos_dtheta);
+        //     const position_type pos2(
+        //         pos1[0] * cos_theta * cos_phi + pos1[2] * sin_theta * cos_phi - pos1[1] * sin_phi,
+        //         pos1[0] * cos_theta * sin_phi + pos1[2] * sin_theta * sin_phi + pos1[1] * cos_phi,
+        //         pos1[2] * cos_theta - pos1[0] * sin_theta);
+        //     return pos2;
+        // }
     }
     particle_info_traits_type;
 };
@@ -517,6 +590,17 @@ public:
         }
         return (*ps_).update_particle(pid, p);
     }
+
+    bool update_particle(typename particle_space_traits_type::particle_id_pair_type const& p)
+    {
+        const particle_type& p0 = particle_space_traits_type::get(p.second);
+        if (molecule_info_map_.find(p0.species()) == molecule_info_map_.end())
+        {
+            register_species(p0);
+        }
+        return (*ps_).update_particle(p);
+    }
+
 
     molecule_info_range get_molecule_info_range() const
     {
@@ -741,6 +825,51 @@ public:
     //         return std::make_pair(std::make_pair(pid, p), update_particle(pid, p));
     //     }
     // }
+
+    std::pair<std::pair<particle_id_type, particle_type>, bool>
+    new_particle(const particle_type& p)
+    {
+        return new_particle(particle_space_traits_type::as(p));
+    }
+
+    std::pair<std::pair<particle_id_type, particle_type>, bool>
+    new_particle(const ecell4::Species& sp, const position_type& pos)
+    {
+        const species_id_type sid(sp.serial());
+        typename molecule_info_map::const_iterator i(molecule_info_map_.find(sid));
+        molecule_info_type const minfo(
+            i != molecule_info_map_.end() ? (*i).second : get_molecule_info(sp));
+        return new_particle(
+            particle_space_traits_type::as(particle_type(sid, pos, minfo.radius, minfo.D)));
+    }
+
+    // std::pair<std::pair<particle_id_type, particle_type>, bool>
+    // new_particle(typename particle_space_traits_type::particle_type const& v)
+    // {
+    //    return new_particle(particle_space_traits_type::get(v));
+    // }
+
+    std::pair<std::pair<particle_id_type, particle_type>, bool>
+    new_particle(typename particle_space_traits_type::particle_type const& v)
+    {
+        const particle_type& p = particle_space_traits_type::get(v);
+        const particle_id_pair_and_distance_list overlapped(
+            check_overlap(
+                particle_shape_type(p.position(), p.radius())));
+        if (overlapped.size() > 0)
+        {
+            return std::make_pair(std::make_pair(pidgen_(), p), false);
+            // return std::make_pair(std::make_pair(particle_id_type(), p), false);
+        }
+        else
+        {
+            const particle_id_type pid = pidgen_();
+            typename particle_space_traits_type::particle_id_pair_type const new_id_pair(std::make_pair(pid, v));
+            return std::make_pair(particle_space_traits_type::get(new_id_pair), update_particle(new_id_pair));
+            // return std::make_pair(particle_space_traits_type::get(new_id_pair), update_particle(particle_space_traits_type::get(new_id_pair).first, particle_space_traits_type::get(new_id_pair).second));
+            // return std::make_pair(particle_space_traits_type::get(new_id_pair), update_particle(pid, p));
+        }
+    }
 
     void add_molecules(const ecell4::Species& sp, const ecell4::Integer& num)
     {
@@ -1038,48 +1167,6 @@ public:
     typename particle_space_traits_type::particle_id_pair_type const& get_particle_with_info(const particle_id_type& pid) const
     {
         return (*ps_).get_particle_with_info(pid);
-    }
-
-    bool update_particle(typename particle_space_traits_type::particle_id_pair_type const& p)
-    {
-        return (*ps_).update_particle(p);
-    }
-
-    std::pair<std::pair<particle_id_type, particle_type>, bool>
-    new_particle(const particle_type& p)
-    {
-        return new_particle(particle_space_traits_type::as(p));
-    }
-
-    std::pair<std::pair<particle_id_type, particle_type>, bool>
-    new_particle(const ecell4::Species& sp, const position_type& pos)
-    {
-        const species_id_type sid(sp.serial());
-        typename molecule_info_map::const_iterator i(molecule_info_map_.find(sid));
-        molecule_info_type const minfo(
-            i != molecule_info_map_.end() ? (*i).second : get_molecule_info(sp));
-        return new_particle(
-            particle_space_traits_type::as(particle_type(sid, pos, minfo.radius, minfo.D)));
-    }
-
-    std::pair<std::pair<particle_id_type, particle_type>, bool>
-    new_particle(typename particle_space_traits_type::particle_type const& v)
-    {
-        const particle_type& p = particle_space_traits_type::get(v);
-        const particle_id_pair_and_distance_list overlapped(
-            check_overlap(
-                particle_shape_type(p.position(), p.radius())));
-        if (overlapped.size() > 0)
-        {
-            return std::make_pair(std::make_pair(pidgen_(), particle_space_traits_type::get(v)), false);
-            // return std::make_pair(std::make_pair(particle_id_type(), p), false);
-        }
-        else
-        {
-            const particle_id_type pid = pidgen_();
-            typename particle_space_traits_type::particle_id_pair_type const v_(std::make_pair(pid, v));
-            return std::make_pair(particle_space_traits_type::get(v_), update_particle(v_));
-        }
     }
 
     /**
