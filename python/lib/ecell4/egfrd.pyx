@@ -823,6 +823,10 @@ cdef class EGFRDSimulator:
         else:
             return self.thisptr.step(<Real> upto)
 
+    def finalize(self):
+        """Stop all the particles once."""
+        self.thisptr.finalize()
+
     def t(self):
         """Return the time."""
         return self.thisptr.t()

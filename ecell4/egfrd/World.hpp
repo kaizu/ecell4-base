@@ -110,6 +110,7 @@ struct WorldTraitsBase
         const ecell4::Real D;
         const std::string structure_id;
         const ecell4::Real Drot;
+        const ecell4::Real theta; //XXX: removed later
     };
 
     typedef MoleculeInfo molecule_info_type;
@@ -231,7 +232,10 @@ struct WorldTraitsBase
             particle_info_type pinfo;
             pinfo.num_steps = 0;
             pinfo.t = 0.0;
-            pinfo.theta = rng.uniform(0.0, M_PI);
+            // pinfo.theta = 0.0;
+            // pinfo.phi = 0.0;
+            // pinfo.theta = rng.uniform(0.0, M_PI);
+            pinfo.theta = rng.uniform(0.0, minfo.theta);
             pinfo.phi = rng.uniform(-M_PI, M_PI);
             pinfo.Drot = minfo.Drot;
             return std::make_pair(p, pinfo);
@@ -243,35 +247,39 @@ struct WorldTraitsBase
             remove_const(old).t += dt;
 
             const particle_info_type& pinfo = old.second.second;
-            if (pinfo.Drot == 0.0)
+            if (pinfo.Drot == 0.0 || dt == 0.0)
             {
                 return;
             }
 
-            const length_type dthetasq = abs(rng.gaussian(sqrt(2 * pinfo.Drot * dt)));
-            const length_type dtheta = fmod(sqrt(dthetasq), M_PI);
-            const length_type dphi = rng.uniform(-M_PI, M_PI);
+            const length_type dtheta = abs(rng.gaussian(sqrt(4 * pinfo.Drot * dt)));
+            // const length_type dthetasq = abs(rng.gaussian(sqrt(2 * pinfo.Drot * dt)));
+            // const length_type dtheta = fmod(sqrt(dthetasq), M_PI);
+            // const length_type dphi = rng.uniform(-M_PI, M_PI);
 
             const length_type sin_theta = sin(pinfo.theta);
             const length_type cos_theta = cos(pinfo.theta);
             const length_type sin_phi = sin(pinfo.phi);
             const length_type cos_phi = cos(pinfo.phi);
-            const length_type sin_dtheta = sin(dtheta);
-            const length_type cos_dtheta = cos(dtheta);
-            const length_type sin_dphi = sin(dphi);
-            const length_type cos_dphi = cos(dphi);
+            // const length_type sin_dtheta = sin(dtheta);
+            // const length_type cos_dtheta = cos(dtheta);
+            // const length_type sin_dphi = sin(dphi);
+            // const length_type cos_dphi = cos(dphi);
 
-            const position_type pos1(
-                sin_dtheta * sin_dphi,
-                sin_dtheta * cos_dphi,
-                cos_dtheta);
+            // const position_type pos1(
+            //     sin_dtheta * sin_dphi,
+            //     sin_dtheta * cos_dphi,
+            //     cos_dtheta);
+            // const position_type pos2(
+            //     pos1[0] * cos_theta * cos_phi + pos1[2] * sin_theta * cos_phi - pos1[1] * sin_phi,
+            //     pos1[0] * cos_theta * sin_phi + pos1[2] * sin_theta * sin_phi + pos1[1] * cos_phi,
+            //     pos1[2] * cos_theta - pos1[0] * sin_theta);
+
             const position_type pos2(
-                pos1[0] * cos_theta * cos_phi + pos1[2] * sin_theta * cos_phi - pos1[1] * sin_phi,
-                pos1[0] * cos_theta * sin_phi + pos1[2] * sin_theta * sin_phi + pos1[1] * cos_phi,
-                pos1[2] * cos_theta - pos1[0] * sin_theta);
+                draw_rotational_vector(rng, dtheta, cos_theta, sin_theta, cos_phi, sin_phi));
 
-            // const position_type pos2(draw_rotational_vector(rng, dtheta, cos_theta, cos_phi));
-
+            // remove_const(old).theta += dtheta;
+            // remove_const(old).phi += 0.0;
             remove_const(old).theta = acos(pos2[2]);
             remove_const(old).phi = atan2(pos2[1], pos2[0]);
         }
@@ -288,58 +296,80 @@ struct WorldTraitsBase
             rng_type& rng,
             particle_id_pair_type const& reactant,
             particle_id_pair_type const& product0, molecule_info_type const& minfo0,
-            particle_id_pair_type const& product1, molecule_info_type const& minfo1)
+            particle_id_pair_type const& product1, molecule_info_type const& minfo1,
+            position_type const& ipv)
         {
             // std::cout << "particle_space_traits_type::apply_first_order_reaction(...) is called " << minfo0.Drot << ", " << minfo1.Drot << std::endl;
 
-            // {
-            //     position_type const ipv(
-            //         normalize(get(product1.second).position() - get(product0.second).position()));
+            {
+                // position_type const ipv(
+                //     normalize(get(product1.second).position() - get(product0.second).position()));
 
-            //     const particle_info_type& pinfo = reactant.second.second;
-            //     const position_type pos(
-            //         draw_rotational_vector(
-            //             rng, pinfo.theta, ipv[2],
-            //             (ipv[2] != 0.0 ? ipv[0] / sqrt(1 - ipv[2] * ipv[2]) : 1.0)));
+                const particle_info_type& pinfo = reactant.second.second;
 
-            //     remove_const(product0).theta = acos(pos[2]);
-            //     remove_const(product0).phi = atan2(pos[1], pos[0]);
-            // }
+                const length_type cos_theta = ipv[2];
+                const length_type sin_theta = sqrt(1 - cos_theta * cos_theta);
+                const length_type phi = atan2(ipv[1], ipv[0]);
+                const length_type sin_phi = sin(phi);
+                const length_type cos_phi = cos(phi);
 
-            remove_const(product0) = reactant.second.second;
+                const position_type pos(
+                    draw_rotational_vector(
+                        rng, pinfo.theta, cos_theta, sin_theta, cos_phi, sin_phi));
+
+                remove_const(product0).theta = acos(pos[2]);
+                remove_const(product0).phi = atan2(pos[1], pos[0]);
+
+                const length_type dtheta = acos(dot_product(ipv, pos) / length(ipv) / length(pos));
+                // std::cout << "apply_first_order_reaction theta=" << dtheta << " [" << product0.first << ", " << product1.first << "] => " << product0.second.first.species().serial() << ", " << product1.second.first.species().serial() << ", ipv=" << normalize(ipv) << ", " << product0.second.first.position() << ", " << product1.second.first.position() << std::endl;
+            }
+
+            // remove_const(product0) = reactant.second.second;
             remove_const(product0).Drot = minfo0.Drot;
-            remove_const(product1) = reactant.second.second;
+            // remove_const(product1) = reactant.second.second;
             remove_const(product1).Drot = minfo1.Drot;
         }
 
-        static void apply_second_order_reaction(
+        static bool apply_second_order_reaction(
             rng_type& rng,
             particle_id_pair_type const& reactant0, particle_id_pair_type const& reactant1,
-            particle_id_pair_type const& product, molecule_info_type const& minfo)
+            particle_type const& product, molecule_info_type const& minfo)
+            // particle_id_pair_type const& product, molecule_info_type const& minfo)
         {
             // std::cout << "particle_space_traits_type::apply_second_order_reaction(...) is called " << std::endl;
 
-            // {
-            //     position_type const ipv(
-            //         get(reactant1.second).position() - get(reactant0.second).position());
+            {
+                position_type const ipv(
+                    get(reactant1.second).position() - get(reactant0.second).position());
 
-            //     const particle_info_type& pinfo = reactant0.second.second;
-            //     const length_type sin_theta = sin(pinfo.theta);
-            //     const length_type cos_theta = cos(pinfo.theta);
-            //     const length_type sin_phi = sin(pinfo.phi);
-            //     const length_type cos_phi = cos(pinfo.phi);
-            //     position_type const direction(
-            //         cos_phi * sin_theta, sin_phi * sin_theta, cos_theta);
+                const particle_info_type& pinfo = reactant0.second.second;
+                const length_type sin_theta = sin(pinfo.theta);
+                const length_type cos_theta = cos(pinfo.theta);
+                const length_type sin_phi = sin(pinfo.phi);
+                const length_type cos_phi = cos(pinfo.phi);
+                position_type const direction(
+                    cos_phi * sin_theta, sin_phi * sin_theta, cos_theta);
 
-            //     length_type const cos_dtheta(dot_product(ipv, direction) / length(ipv));
-            //     length_type const dtheta = acos(cos_dtheta);
+                length_type const cos_dtheta(dot_product(ipv, direction) / length(ipv));
+                length_type const dtheta = acos(cos_dtheta);
 
-            //     remove_const(product).theta = dtheta;
-            //     remove_const(product).phi = 0.0;
-            // }
+                if (dtheta > minfo.theta)
+                {
+                    // std::cout << "a second order reaction was rejected: theta=" << minfo.theta << " < " << dtheta << "[" << reactant0.first << "," << reactant1.first << "]" << ", ipv=" << normalize(ipv) << ", " << reactant0.second.first.position() << ", " << reactant1.second.first.position() << std::endl;
+                    return false;
+                }
+                else
+                {
+                    // std::cout << "a second order reaction is accepted: theta=" << minfo.theta << " >= " << dtheta << "[" << reactant0.first << "," << reactant1.first << "] => " << ", ipv=" << normalize(ipv) <<  ", " << reactant0.second.first.position() << ", " << reactant1.second.first.position() << std::endl;
+                }
 
-            remove_const(product) = reactant0.second.second;
+                remove_const(product).theta = dtheta;
+                remove_const(product).phi = 0.0;
+            }
+
+            // remove_const(product) = reactant0.second.second;
             remove_const(product).Drot = minfo.Drot;
+            return true;
         }
 
     private:
@@ -349,30 +379,32 @@ struct WorldTraitsBase
             return const_cast<particle_info_type&>(v.second.second);
         }
 
-        // static position_type draw_rotational_vector(
-        //     rng_type& rng, Real const& dtheta, Real const& cos_theta, Real const& cos_phi)
-        // {
-        //     // const length_type cos_theta = pos0[2];
-        //     // const length_type cos_phi = (cos_theta != 1 ? pos0[0] / sin_theta : 1);
-        //     const length_type sin_theta = sqrt(1 - cos_theta * cos_theta);
-        //     const length_type sin_phi = sqrt(1 - cos_phi * cos_phi);
+        static particle_info_type& remove_const(particle_type const& v)
+        {
+            return const_cast<particle_info_type&>(v.second);
+        }
 
-        //     const length_type dphi = rng.uniform(-M_PI, M_PI);
+        static position_type draw_rotational_vector(
+            rng_type& rng, Real const& dtheta,
+            Real const& cos_theta, Real const& sin_theta,
+            Real const& cos_phi, Real const& sin_phi)
+        {
+            const length_type dphi = rng.uniform(-M_PI, M_PI);
 
-        //     const length_type sin_dtheta = sin(dtheta);
-        //     const length_type cos_dtheta = cos(dtheta);
-        //     const length_type sin_dphi = sin(dphi);
-        //     const length_type cos_dphi = cos(dphi);
-        //     const position_type pos1(
-        //         sin_dtheta * sin_dphi,
-        //         sin_dtheta * cos_dphi,
-        //         cos_dtheta);
-        //     const position_type pos2(
-        //         pos1[0] * cos_theta * cos_phi + pos1[2] * sin_theta * cos_phi - pos1[1] * sin_phi,
-        //         pos1[0] * cos_theta * sin_phi + pos1[2] * sin_theta * sin_phi + pos1[1] * cos_phi,
-        //         pos1[2] * cos_theta - pos1[0] * sin_theta);
-        //     return pos2;
-        // }
+            const length_type sin_dtheta = sin(dtheta);
+            const length_type cos_dtheta = cos(dtheta);
+            const length_type sin_dphi = sin(dphi);
+            const length_type cos_dphi = cos(dphi);
+            const position_type pos1(
+                sin_dtheta * sin_dphi,
+                sin_dtheta * cos_dphi,
+                cos_dtheta);
+            const position_type pos2(
+                pos1[0] * cos_theta * cos_phi + pos1[2] * sin_theta * cos_phi - pos1[1] * sin_phi,
+                pos1[0] * cos_theta * sin_phi + pos1[2] * sin_theta * sin_phi + pos1[1] * cos_phi,
+                pos1[2] * cos_theta - pos1[0] * sin_theta);
+            return pos2;
+        }
     }
     particle_info_traits_type;
 };
@@ -945,6 +977,7 @@ public:
         Real D = 0.0;
         std::string structure_id = "world";
         Real Drot = 0.0;
+        Real theta = M_PI;
 
         if (sp.has_attribute("radius"))
         {
@@ -957,6 +990,8 @@ public:
                 structure_id = sp.get_attribute_as<std::string>("structure_id");
             if (sp.has_attribute("Drot"))
                 Drot = sp.get_attribute_as<Real>("Drot");
+            if (sp.has_attribute("theta"))
+                theta = sp.get_attribute_as<Real>("theta");
         }
         else if (boost::shared_ptr<model_type> bound_model = lock_model())
         {
@@ -974,6 +1009,8 @@ public:
                 structure_id = newsp.get_attribute_as<std::string>("structure_id");
             if (newsp.has_attribute("Drot"))
                 Drot = newsp.get_attribute_as<Real>("Drot");
+            if (newsp.has_attribute("theta"))
+                theta = newsp.get_attribute_as<Real>("theta");
         }
         else
         {
@@ -981,7 +1018,7 @@ public:
         }
 
         const molecule_info_type minfo = {
-            radius, D, structure_id, Drot
+            radius, D, structure_id, Drot, theta
             };
         return minfo;
     }

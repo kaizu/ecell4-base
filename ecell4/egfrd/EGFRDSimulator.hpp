@@ -931,6 +931,7 @@ public:
           multi_shell_factor_(.05),
           rejected_moves_(0), zero_step_count_(0), dirty_(true)
     {
+        // log_.level(Logger::L_DEBUG);
         std::fill(domain_count_per_type_.begin(), domain_count_per_type_.end(), 0);
         std::fill(single_step_count_.begin(), single_step_count_.end(), 0);
         std::fill(pair_step_count_.begin(), pair_step_count_.end(), 0);
@@ -951,6 +952,7 @@ public:
           multi_shell_factor_(.05),
           rejected_moves_(0), zero_step_count_(0), dirty_(true)
     {
+        // log_.level(Logger::L_DEBUG);
         std::fill(domain_count_per_type_.begin(), domain_count_per_type_.end(), 0);
         std::fill(single_step_count_.begin(), single_step_count_.end(), 0);
         std::fill(pair_step_count_.begin(), pair_step_count_.end(), 0);
@@ -1126,21 +1128,46 @@ public:
 
     void finalize()
     {
-        std::vector<domain_id_type> non_singles;
+        //XXX: busrt(non_single_ev) can push a new event, and thus break the event iterator.
+        // std::vector<domain_id_type> non_singles;
+        // // first burst all Singles.
+        // BOOST_FOREACH ( event_id_pair_type const& event, scheduler_.events())
+        // {
+        //     if (single_event const* single_ev = dynamic_cast<single_event const*>(event.second.get()))
+        //     {
+        //         burst(single_ev->domain());
+        //         continue;
+        //     }
+        //     if (birth_event const* birth_ev = dynamic_cast<birth_event const*>(event.second.get()))
+        //     {
+        //         continue;
+        //     }
+        //     if (domain_event_base const* domain_ev = dynamic_cast<domain_event_base const*>(event.second.get()))
+        //     {
+        //         non_singles.push_back(domain_ev->domain().id());
+        //         continue;
+        //     }
+        //     throw not_implemented("finalize: ?");
+        // }
 
-        BOOST_FOREACH (event_id_pair_type const& event, scheduler_.events())
+        std::vector<domain_id_type> domain_events;
+
+        BOOST_FOREACH ( event_id_pair_type const& event, scheduler_.events())
         {
             if (domain_event_base const* domain_ev = dynamic_cast<domain_event_base const*>(event.second.get()))
             {
-                burst(domain_ev->domain());
+                domain_events.push_back(domain_ev->domain().id());
                 continue;
             }
             if (birth_event const* birth_ev = dynamic_cast<birth_event const*>(event.second.get()))
             {
                 continue;
             }
-            throw not_implemented("?");
+            throw not_implemented("finalize: ?");
         }
+
+
+        burst_domains(domain_events);
 
         base_type::dt_ = 0.;
     }
@@ -2053,7 +2080,7 @@ protected:
         {
             ;
         }
-        throw not_implemented("?");
+        throw not_implemented("busrt: ?");
     }
     // }}}
 
@@ -2222,7 +2249,16 @@ protected:
 
                 typename world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = (*base_type::world_).get_particle_with_info(pp[0].first);
                 typename world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = (*base_type::world_).get_particle_with_info(pp[1].first);
-                world_type::particle_space_traits_type::apply_first_order_reaction(this->rng(), pinfo0, pinfo1, product_species[0], pinfo2, product_species[1]);
+
+
+                position_type const ipv(
+                        normalize(subtract(
+                            (*base_type::world_).periodic_transpose(
+                                new_p[1].position(),
+                                new_p[0].position()), new_p[0].position())));
+
+
+                world_type::particle_space_traits_type::apply_first_order_reaction(this->rng(), pinfo0, pinfo1, product_species[0], pinfo2, product_species[1], ipv);
                 (*base_type::world_).update_particle(pinfo1);
                 (*base_type::world_).update_particle(pinfo2);
 
@@ -2537,7 +2573,7 @@ protected:
                 bursted.push_back(boost::dynamic_pointer_cast<domain_type>(_bursted[1]));
                 continue;
             }
-            throw not_implemented("?");
+            throw not_implemented("bust_non_multis: ?");
         }
     }
 
@@ -3299,7 +3335,7 @@ protected:
                     }
                     else
                     {
-                        throw not_implemented("?");
+                        throw not_implemented("fire_pair: ?");
                     }
                 }
                 catch (no_space const&)
@@ -3350,32 +3386,87 @@ protected:
                         molecule_info_type const new_species(
                             (*base_type::world_).get_molecule_info(new_species_id));
 
-                        // calculate new R
+                        position_type const new_com0(
+                            draw_on_iv_reaction(this->rng(), *base_type::world_).draw_com(domain, domain.dt()));
+                        position_type const new_iv0(
+                            draw_on_iv_reaction(this->rng(), *base_type::world_).draw_iv(domain, domain.dt(), domain.iv()));
                         position_type const new_com(
-                            (*base_type::world_).apply_boundary(
-                                draw_on_iv_reaction(
-                                    this->rng(),
-                                    *base_type::world_).draw_com(
-                                        domain, domain.dt())));
+                            (*base_type::world_).apply_boundary(new_com0));
+                        D_type const D0(domain.particles()[0].second.D());
+                        D_type const D1(domain.particles()[1].second.D());
+                        position_type const pos0(subtract(new_com0, multiply(new_iv0, D0 / (D0 + D1))));
+                        position_type const pos1(add(new_com0, multiply(new_iv0, D1 / (D0 + D1))));
+
+                        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo0 = (*base_type::world_).get_particle_with_info(domain.particles()[0].first);
+                        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = (*base_type::world_).get_particle_with_info(domain.particles()[1].first);
+
+                        world_type::particle_space_traits_type::get(pinfo0).second = particle_type(world_type::particle_space_traits_type::get(pinfo0).second.species(), pos0, world_type::particle_space_traits_type::get(pinfo0).second.radius(), world_type::particle_space_traits_type::get(pinfo0).second.D());
+                        world_type::particle_space_traits_type::get(pinfo1).second = particle_type(world_type::particle_space_traits_type::get(pinfo1).second.species(), pos1, world_type::particle_space_traits_type::get(pinfo1).second.radius(), world_type::particle_space_traits_type::get(pinfo1).second.D());
+                        world_type::particle_space_traits_type::propagate(this->rng(), pinfo0, domain.dt());
+                        world_type::particle_space_traits_type::propagate(this->rng(), pinfo1, domain.dt());
+
+                        const molecule_info_type minfo((*base_type::world_).get_molecule_info(new_species_id));
+                        const particle_type p(new_species_id, new_com, minfo.radius, minfo.D);
+                        typename particle_space_traits_type::particle_type
+                            pinfo2(particle_space_traits_type::as(this->rng(), p, minfo));
+
+                        //FIXME: The following way is messy, and not available for NetfreeModel
+                        const bool ret = (
+                            domain.particles()[0].second.species() == r.get_reactants()[0]
+                            ? world_type::particle_space_traits_type::apply_second_order_reaction(
+                                this->rng(), pinfo0, pinfo1, pinfo2, new_species)
+                            : world_type::particle_space_traits_type::apply_second_order_reaction(
+                                this->rng(), pinfo1, pinfo0, pinfo2, new_species)
+                            );
+
+                        world_type::particle_space_traits_type::get(pinfo0).second = particle_type(world_type::particle_space_traits_type::get(pinfo0).second.species(), (*base_type::world_).apply_boundary(world_type::particle_space_traits_type::get(pinfo0).second.position()), world_type::particle_space_traits_type::get(pinfo0).second.radius(), world_type::particle_space_traits_type::get(pinfo0).second.D());
+                        world_type::particle_space_traits_type::get(pinfo1).second = particle_type(world_type::particle_space_traits_type::get(pinfo1).second.species(), (*base_type::world_).apply_boundary(world_type::particle_space_traits_type::get(pinfo1).second.position()), world_type::particle_space_traits_type::get(pinfo1).second.radius(), world_type::particle_space_traits_type::get(pinfo1).second.D());
+
+
+                        if (ret == false)
+                        {
+                            (*base_type::world_).update_particle(pinfo0);
+                            (*base_type::world_).update_particle(pinfo1);
+                            boost::array<boost::shared_ptr<single_type>, 2> const singles = { {
+                                wrap_single(world_type::particle_space_traits_type::get(pinfo0)),
+                                wrap_single(world_type::particle_space_traits_type::get(pinfo1))
+                            } };
+                            break;
+                        }
+
+                        // calculate new R
+                        // position_type const new_com(
+                        //     (*base_type::world_).apply_boundary(
+                        //         draw_on_iv_reaction(
+                        //             this->rng(),
+                        //             *base_type::world_).draw_com(
+                        //                 domain, domain.dt())));
                         BOOST_ASSERT(
                             (*base_type::world_).distance(
                                 domain.shell().second.position(),
                                 new_com) + new_species.radius
                             < shape(domain.shell().second).radius());
 
-                        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo0 = (*base_type::world_).get_particle_with_info(domain.particles()[0].first);
-                        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = (*base_type::world_).get_particle_with_info(domain.particles()[1].first);
+                        // typename world_type::particle_space_traits_type::particle_id_pair_type pinfo0 = (*base_type::world_).get_particle_with_info(domain.particles()[0].first);
+                        // typename world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = (*base_type::world_).get_particle_with_info(domain.particles()[1].first);
 
                         (*base_type::world_).remove_particle(domain.particles()[0].first);
                         (*base_type::world_).remove_particle(domain.particles()[1].first);
 
-                        particle_id_pair const new_particle(
-                            (*base_type::world_).new_particle(
-                                new_species_id, new_com).first);
+                        // particle_id_pair const new_particle(
+                        //     (*base_type::world_).new_particle(
+                        //         new_species_id, new_com).first);
 
-                        typename world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = (*base_type::world_).get_particle_with_info(new_particle.first);
-                        world_type::particle_space_traits_type::apply_second_order_reaction(this->rng(), pinfo0, pinfo1, pinfo2, new_species);
-                        (*base_type::world_).update_particle(pinfo2);
+                        particle_id_pair const new_particle(
+                            (*base_type::world_).new_particle(pinfo2).first);
+
+                        // typename world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = (*base_type::world_).get_particle_with_info(new_particle.first);
+                        // //FIXME: The following way is messy, and not available for NetfreeModel
+                        // if (domain.particles()[0].second.species() == r.get_reactants()[0])
+                        //     world_type::particle_space_traits_type::apply_second_order_reaction(this->rng(), pinfo0, pinfo1, pinfo2, new_species);
+                        // else
+                        //     world_type::particle_space_traits_type::apply_second_order_reaction(this->rng(), pinfo1, pinfo0, pinfo2, new_species);
+                        // (*base_type::world_).update_particle(pinfo2);
 
                         boost::shared_ptr<single_type> new_single(
                             wrap_single(new_particle));

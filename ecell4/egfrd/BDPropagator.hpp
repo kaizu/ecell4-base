@@ -300,9 +300,14 @@ private:
                             npp0(tx_.new_particle(product_id0, np0).first),
                             npp1(tx_.new_particle(product_id1, np1).first);
 
+                        position_type const ipv(
+                            normalize(subtract(
+                                tx_.periodic_transpose(
+                                    np1,
+                                    np0), np0)));
                         typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = tx_.get_particle_with_info(npp0.first);
                         typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = tx_.get_particle_with_info(npp1.first);
-                        traits_type::world_type::particle_space_traits_type::apply_first_order_reaction(rng_, pinfo0, pinfo1, s0, pinfo2, s1);
+                        traits_type::world_type::particle_space_traits_type::apply_first_order_reaction(rng_, pinfo0, pinfo1, s0, pinfo2, s1, ipv);
                         tx_.update_particle(pinfo2);
                         tx_.update_particle(pinfo2);
 
@@ -398,13 +403,26 @@ private:
                         typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo0 = tx_.get_particle_with_info(pp0.first);
                         typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo1 = tx_.get_particle_with_info(pp1.first);
 
+                        const typename traits_type::world_type::molecule_info_type minfo(tx_.get_molecule_info(product));
+                        const particle_type p2(product, new_pos, minfo.radius, minfo.D);
+                        typename traits_type::world_type::particle_space_traits_type::particle_type
+                            pinfo2(traits_type::world_type::particle_space_traits_type::as(rng_, p2, minfo));
+                        const bool ret = traits_type::world_type::particle_space_traits_type::apply_second_order_reaction(rng_, pinfo0, pinfo1, pinfo2, sp);
+                        if (ret == false)
+                        {
+                            return false;
+                        }
+
                         remove_particle(pp0.first);
                         remove_particle(pp1.first);
                         particle_id_pair npp(tx_.new_particle(product, new_pos).first);
+                        tx_.update_particle(std::make_pair(npp.first, pinfo2));
+                        //XXX: rather use: tx_.new_particle(pinfo2);
 
-                        typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = tx_.get_particle_with_info(npp.first);
-                        traits_type::world_type::particle_space_traits_type::apply_second_order_reaction(rng_, pinfo0, pinfo1, pinfo2, sp);
-                        tx_.update_particle(pinfo2);
+                        // typename traits_type::world_type::particle_space_traits_type::particle_id_pair_type pinfo2 = tx_.get_particle_with_info(npp.first);
+                        // traits_type::world_type::particle_space_traits_type::apply_second_order_reaction(rng_, pinfo0, pinfo1, pinfo2.second, sp);
+                        // traits_type::world_type::particle_space_traits_type::apply_second_order_reaction(rng_, pinfo0, pinfo1, pinfo2, sp);
+                        // tx_.update_particle(pinfo2);
 
                         if (rrec_)
                         {

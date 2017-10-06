@@ -104,6 +104,7 @@ cdef extern from "ecell4/egfrd/egfrd.hpp" namespace "ecell4::egfrd":
         Integer num_steps()
         void step() except +
         bool step(Real) except +
+        void finalize() except +
         Real t()
         void set_t(Real)
         void set_dt(Real)
