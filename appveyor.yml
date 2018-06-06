@@ -55,7 +55,8 @@ install:
   # install stdint
   - if "%PYTHON_VERSION%" == "27" curl -O http://ftp.vector.co.jp/43/28/2114/stdint-20070624.zip
   - if "%PYTHON_VERSION%" == "27" unzip stdint-20070624.zip
-  - ls
+  - if "%PYTHON_VERSION%" == "27" set "STDINTPATH=%ROOTPATH%/build/stdint-20070624"
+  - ls %STDINTPATH%
 
   # install gsl for build_ext
   - if "%PYTHON_VERSION%" == "27" curl -O http://r2d3.geldreich.net/downloads/gsl-1.13-windows-binaries.zip
@@ -68,6 +69,9 @@ install:
   - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "64" cmake -G "Visual Studio 14 2015 Win64" -D CMAKE_CXX_FLAGS_RELEASE="/MD" -D CMAKE_CXX_FLAGS_DEBUG="/MDd" -D CMAKE_C_FLAGS_RELEASE="/MD" -D CMAKE_C_FLAGS_DEBUG="/MDd" .
   - if "%PYTHON_VERSION%" == "36" msbuild GSL.sln /p:Configuration=Release
   - if "%PYTHON_VERSION%" == "36" cd ..
+  - set "GSLPATH=%ROOTPATH%/build/gsl"
+  - ls %GSLPATH%
+
   - ls
 
 #   - if "%PYTHON_VERSION%" == "2.7.14" if "%PYTHON_ARCH%" == "32" cmake -G "Visual Studio 9 2008" -D CMAKE_CXX_FLAGS_RELEASE="/MT" -D CMAKE_CXX_FLAGS_DEBUG="/MTd" -DBOOST_REGEX_LIBRARIES=C:/Libraries/boost_1_67_0/libs -DBoost_INCLUDE_DIR=C:/Libraries/boost_1_67_0 -DGSL_INCLUDE_DIR=C:/projects/ecell4/gsl/include -DGSL_CBLAS_LIBRARIES=C:/projects/ecell4/gsl/lib -DGSL_LIBRARIES=C:/projects/ecell4/gsl/lib -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 .
