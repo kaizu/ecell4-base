@@ -34,6 +34,14 @@ install:
 
   - git submodule update --init --recursive
 
+  # Install Python module(s)
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "python --version"
+  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+  - "python -m pip install --upgrade pip"
+  - if "%PYTHON_VERSION%" == "27" python -m pip install cython
+  - if "%PYTHON_VERSION%" == "36" python -m pip install Cython --install-option="--no-cython-compile"
+
   - md build
   - cd build
 
@@ -80,36 +88,20 @@ install:
   - if "%PYTHON_VERSION%" == "27" if "%PYTHON_ARCH%" == "64" cmake -G "Visual Studio 9 2008 Win64" -D CMAKE_CXX_FLAGS_RELEASE="/MT" -D CMAKE_CXX_FLAGS_DEBUG="/MTd" -DBOOST_REGEX_LIBRARIES=%BOOST_ROOT%/libs -DBoost_INCLUDE_DIR=%BOOST_ROOT% -DGSL_INCLUDE_DIR=%GSLPATH%/include -DGSL_CBLAS_LIBRARIES=%GSLPATH%/lib -DGSL_LIBRARIES=%GSLPATH%/lib -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 ..
   - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "32" cmake -G "Visual Studio 14 2015" -D CMAKE_CXX_FLAGS_RELEASE="/MD" -D CMAKE_CXX_FLAGS_DEBUG="/MDd" -D CMAKE_C_FLAGS_DEBUG="/MDd" -DBoost_INCLUDE_DIR=%BOOST_ROOT% -DGSL_INCLUDE_DIR=%GSLPATH% -DGSL_CBLAS_LIBRARIES=%GSLPATH%/Release -DGSL_LIBRARIES=%GSLPATH%/Release -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 ..
   - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "64" cmake -G "Visual Studio 14 2015 Win64" -D CMAKE_CXX_FLAGS_RELEASE="/MD" -D CMAKE_CXX_FLAGS_DEBUG="/MDd" -D CMAKE_C_FLAGS_DEBUG="/MDd" -DBoost_INCLUDE_DIR=%BOOST_ROOT% -DGSL_INCLUDE_DIR=%GSLPATH% -DGSL_CBLAS_LIBRARIES=%GSLPATH%/Release -DGSL_LIBRARIES=%GSLPATH%/Release -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 ..
-
-  # config.h
-  - cd %ROOTPATH%/build/ecell4/core
-  - type config.h
-  - cd %ROOTPATH%/build/greens_functions
-  - type config.h
+  - type %ROOTPATH%/build/ecell4/core/config.h
+  - type %ROOTPATH%/build/greens_functions/config.h
 
   - cd %ROOTPATH%/build
   - ls
 
-#   # go into ecell4/python
-#   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-#   - "python --version"
-#   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
-#   # - curl -O https://bootstrap.pypa.io/get-pip.py
-#   # - "python get-pip.py"
-#   - "python -m pip install --upgrade pip"
-#   - if "%PYTHON_VERSION%" == "2.7.14" python -m pip install cython
-#   # - if "%PYTHON_VERSION%" == "3.5.2" python -m pip install https://pypi.python.org/packages/cp35/C/Cython/Cython-0.23.4-cp35-none-win32.whl
-#   - if NOT "%PYTHON_VERSION%" == "2.7.14" python -m pip install Cython --install-option="--no-cython-compile"
-#   - cd python
-#   - ECHO "ls boost_1_67_0:"
-#   - ps: "ls \"C:/Libraries/boost_1_67_0\""
-#   - echo %CD%
-#   - if "%PYTHON_VERSION%" == "2.7.14" python setup.py build_ext -I"C:\Program Files (x86)\HDF_Group\HDF5\1.8.17\include";C:/Libraries/boost_1_67_0;C:/projects/ecell4;C:/projects/ecell4/stdint-20070624;C:/projects/ecell4/gsl/include -LC:/projects/ecell4/gsl/lib;"C:\Program Files (x86)\HDF_Group\HDF5\1.8.17\lib"
-#   - if NOT "%PYTHON_VERSION%" == "2.7.14" python setup.py build_ext -I"C:\Program Files (x86)\HDF_Group\HDF5\1.8.17\include";C:/Libraries/boost_1_67_0;C:/projects/ecell4/gsl -LC:/projects/ecell4/gsl/Release;"C:\Program Files (x86)\HDF_Group\HDF5\1.8.17\lib"
-#   - "pip install wheel"
-#   - "python setup.py bdist_wheel -v"
-#   # - "pip install dist/ecell4-4.0.0b2-cp35-none-win32.whl"
-# 
+  # Build Python module
+  - cd %ROOTPATH%/build/python
+  - if "%PYTHON_VERSION%" == "27" python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%ROOTPATH%;%STDINTPATH%;%GSLPATH%/include -L%GSLPATH%/lib;"%HDF5PATH%\lib"
+  - if "%PYTHON_VERSION%" == "36" python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%GSLPATH% -L%GSLPATH%/Release;"%HDF5PATH%\lib"
+  - ls
+  # - "pip install wheel"
+  # - "python setup.py bdist_wheel -v"
+
 # # test_script:
 # #   - "build.cmd %PYTHON%\\python.exe setup.py test"
 
