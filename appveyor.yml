@@ -2,10 +2,12 @@
 
 environment:
   global:
-    HDF_DIR: "C:/Program Files (x86)/HDF_Group/HDF5/1.8.17/lib"
+
+    # HDF_DIR: "C:/Program Files (x86)/HDF_Group/HDF5/1.8.17/lib"
     BOOST_ROOT: C:\Libraries\boost_1_67_0
 
   matrix:
+
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "27"
       PYTHON_ARCH: "32"
@@ -56,7 +58,7 @@ install:
   - if "%PYTHON_VERSION%" == "27" curl -O http://ftp.vector.co.jp/43/28/2114/stdint-20070624.zip
   - if "%PYTHON_VERSION%" == "27" unzip stdint-20070624.zip
   - if "%PYTHON_VERSION%" == "27" set "STDINTPATH=%ROOTPATH%/build/stdint-20070624"
-  - ls %STDINTPATH%
+  - if "%PYTHON_VERSION%" == "27" ls %STDINTPATH%
 
   # install gsl for build_ext
   - if "%PYTHON_VERSION%" == "27" curl -O http://r2d3.geldreich.net/downloads/gsl-1.13-windows-binaries.zip
@@ -72,22 +74,22 @@ install:
   - set "GSLPATH=%ROOTPATH%/build/gsl"
   - ls %GSLPATH%
 
+  # configure ecell4
+  - cd %ROOTPATH%/build
+  - if "%PYTHON_VERSION%" == "27" if "%PYTHON_ARCH%" == "32" cmake -G "Visual Studio 9 2008" -D CMAKE_CXX_FLAGS_RELEASE="/MT" -D CMAKE_CXX_FLAGS_DEBUG="/MTd" -DBOOST_REGEX_LIBRARIES=%BOOST_ROOT%/libs -DBoost_INCLUDE_DIR=%BOOST_ROOT% -DGSL_INCLUDE_DIR=%GSLPATH%/include -DGSL_CBLAS_LIBRARIES=%GSLPATH%/lib -DGSL_LIBRARIES=%GSLPATH%/lib -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 ..
+  - if "%PYTHON_VERSION%" == "27" if "%PYTHON_ARCH%" == "64" cmake -G "Visual Studio 9 2008 Win64" -D CMAKE_CXX_FLAGS_RELEASE="/MT" -D CMAKE_CXX_FLAGS_DEBUG="/MTd" -DBOOST_REGEX_LIBRARIES=%BOOST_ROOT%/libs -DBoost_INCLUDE_DIR=%BOOST_ROOT% -DGSL_INCLUDE_DIR=%GSLPATH%/include -DGSL_CBLAS_LIBRARIES=%GSLPATH%/lib -DGSL_LIBRARIES=%GSLPATH%/lib -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 ..
+  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "32" cmake -G "Visual Studio 14 2015" -D CMAKE_CXX_FLAGS_RELEASE="/MD" -D CMAKE_CXX_FLAGS_DEBUG="/MDd" -D CMAKE_C_FLAGS_DEBUG="/MDd" -DBoost_INCLUDE_DIR=%BOOST_ROOT% -DGSL_INCLUDE_DIR=%GSLPATH% -DGSL_CBLAS_LIBRARIES=%GSLPATH%/Release -DGSL_LIBRARIES=%GSLPATH%/Release -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 ..
+  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "64" cmake -G "Visual Studio 14 2015 Win64" -D CMAKE_CXX_FLAGS_RELEASE="/MD" -D CMAKE_CXX_FLAGS_DEBUG="/MDd" -D CMAKE_C_FLAGS_DEBUG="/MDd" -DBoost_INCLUDE_DIR=%BOOST_ROOT% -DGSL_INCLUDE_DIR=%GSLPATH% -DGSL_CBLAS_LIBRARIES=%GSLPATH%/Release -DGSL_LIBRARIES=%GSLPATH%/Release -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 ..
+
+  # config.h
+  - cd %ROOTPATH%/build/ecell4/core
+  - type config.h
+  - cd %ROOTPATH%/build/greens_functions
+  - type config.h
+
+  - cd %ROOTPATH%/build
   - ls
 
-#   - if "%PYTHON_VERSION%" == "2.7.14" if "%PYTHON_ARCH%" == "32" cmake -G "Visual Studio 9 2008" -D CMAKE_CXX_FLAGS_RELEASE="/MT" -D CMAKE_CXX_FLAGS_DEBUG="/MTd" -DBOOST_REGEX_LIBRARIES=C:/Libraries/boost_1_67_0/libs -DBoost_INCLUDE_DIR=C:/Libraries/boost_1_67_0 -DGSL_INCLUDE_DIR=C:/projects/ecell4/gsl/include -DGSL_CBLAS_LIBRARIES=C:/projects/ecell4/gsl/lib -DGSL_LIBRARIES=C:/projects/ecell4/gsl/lib -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 .
-#   # - if "%PYTHON_VERSION%" == "2.7.12" if "%PYTHON_ARCH%" == "64" "C:\Users\appveyor\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0\vcvarsall.bat" amd64
-#   # - if "%PYTHON_VERSION%" == "2.7.12" if "%PYTHON_ARCH%" == "64" cmake -G "Visual Studio 9 2008 Win64" -D CMAKE_C_COMPILER="C:/Users/appveyor/AppData/Local/Programs/Common/Microsoft/Visual C++ for Python/9.0/VC/bin/amd64/cl.exe" -D CMAKE_CXX_COMPILER="C:/Users/appveyor/AppData/Local/Programs/Common/Microsoft/Visual C++ for Python/9.0/VC/bin/amd64/cl.exe" -D CMAKE_CXX_FLAGS_RELEASE="/MT" -D CMAKE_CXX_FLAGS_DEBUG="/MTd" -DBOOST_REGEX_LIBRARIES=C:/Libraries/boost_1_67_0/libs -DBoost_INCLUDE_DIR=C:/Libraries/boost_1_67_0 -DGSL_INCLUDE_DIR=C:/projects/ecell4/gsl/include -DGSL_CBLAS_LIBRARIES=C:/projects/ecell4/gsl/lib -DGSL_LIBRARIES=C:/projects/ecell4/gsl/lib -DNO_SHARED:BOOL=1 .
-#   - if "%PYTHON_VERSION%" == "2.7.14" if "%PYTHON_ARCH%" == "64" cmake -G "Visual Studio 9 2008 Win64" -D CMAKE_CXX_FLAGS_RELEASE="/MT" -D CMAKE_CXX_FLAGS_DEBUG="/MTd" -DBOOST_REGEX_LIBRARIES=C:/Libraries/boost_1_67_0/libs -DBoost_INCLUDE_DIR=C:/Libraries/boost_1_67_0 -DGSL_INCLUDE_DIR=C:/projects/ecell4/gsl/include -DGSL_CBLAS_LIBRARIES=C:/projects/ecell4/gsl/lib -DGSL_LIBRARIES=C:/projects/ecell4/gsl/lib -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 .
-#   - if NOT "%PYTHON_VERSION%" == "2.7.14" if "%PYTHON_ARCH%" == "32" cmake -G "Visual Studio 14 2015" -D CMAKE_CXX_FLAGS_RELEASE="/MD" -D CMAKE_CXX_FLAGS_DEBUG="/MDd" -D CMAKE_C_FLAGS_DEBUG="/MDd" -DBoost_INCLUDE_DIR=C:/Libraries/boost_1_67_0 -DGSL_INCLUDE_DIR=C:/projects/ecell4/gsl -DGSL_CBLAS_LIBRARIES=C:/projects/ecell4/gsl/Release -DGSL_LIBRARIES=C:/projects/ecell4/gsl/Release -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 .
-#   - if NOT "%PYTHON_VERSION%" == "2.7.14" if "%PYTHON_ARCH%" == "64" cmake -G "Visual Studio 14 2015 Win64" -D CMAKE_CXX_FLAGS_RELEASE="/MD" -D CMAKE_CXX_FLAGS_DEBUG="/MDd" -D CMAKE_C_FLAGS_DEBUG="/MDd" -DBoost_INCLUDE_DIR=C:/Libraries/boost_1_67_0 -DGSL_INCLUDE_DIR=C:/projects/ecell4/gsl -DGSL_CBLAS_LIBRARIES=C:/projects/ecell4/gsl/Release -DGSL_LIBRARIES=C:/projects/ecell4/gsl/Release -DNO_SHARED:BOOL=1 -DNO_BESSEL_TABLE:BOOL=1 .
-# 
-#   # config.h
-#   - cd ecell4/core
-#   - type config.h
-#   - cd ../../greens_functions
-#   - type config.h
-#   - cd ..
-# 
 #   # go into ecell4/python
 #   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 #   - "python --version"
