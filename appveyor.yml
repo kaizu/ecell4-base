@@ -108,6 +108,7 @@ build: false
 branches:
   only:
     - master
+    - conda
 
 # artifacts:
 #   # bdist_wheel puts your built wheel in the dist directory
