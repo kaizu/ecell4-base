@@ -101,12 +101,15 @@ install:
   # Build Python module
   - cd %ROOTPATH%/build/python
 
-  - if "%PYTHON_VERSION%" == "27" if "%PYTHON_ARCH%" == "32" C:\Miniconda\python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%ROOTPATH%;%STDINTPATH%;%GSLPATH%/include -L%GSLPATH%/lib;"%HDF5PATH%\lib"
-  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "32" C:\Miniconda36\python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%GSLPATH% -L%GSLPATH%/Release;"%HDF5PATH%\lib"
-  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "64" C:\Miniconda36-x64\python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%GSLPATH% -L%GSLPATH%/Release;"%HDF5PATH%\lib"
-  - if "%PYTHON_VERSION%" == "27" if "%PYTHON_ARCH%" == "32" C:\Miniconda\python setup.py bdist_cond -v
-  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "32" C:\Miniconda36\python setup.py bdist_cond -v
-  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "64" C:\Miniconda36-x64\python setup.py bdist_cond -v
+  - if "%PYTHON_VERSION%" == "27" if "%PYTHON_ARCH%" == "32" set CONDAPATH=C:\Miniconda
+  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "32" set CONDAPATH=C:\Miniconda36
+  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "64" set CONDAPATH=C:\Miniconda36-x64
+
+  - if "%PYTHON_VERSION%" == "27" %CONDAPTH%\python -m pip install cython
+  - if "%PYTHON_VERSION%" == "36" %CONDAPTH%\python -m pip install Cython --install-option="--no-cython-compile"
+  - if "%PYTHON_VERSION%" == "27" %CONDAPATH%\python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%ROOTPATH%;%STDINTPATH%;%GSLPATH%/include -L%GSLPATH%/lib;"%HDF5PATH%\lib"
+  - if "%PYTHON_VERSION%" == "36" %CONDAPATH%\python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%GSLPATH% -L%GSLPATH%/Release;"%HDF5PATH%\lib"
+  - %CONDAPATH%\python setup.py bdist_cond -v
   - ls
 
   # - if "%PYTHON_VERSION%" == "27" python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%ROOTPATH%;%STDINTPATH%;%GSLPATH%/include -L%GSLPATH%/lib;"%HDF5PATH%\lib"
