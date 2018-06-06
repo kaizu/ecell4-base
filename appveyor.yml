@@ -26,26 +26,32 @@ environment:
 #   - cmd: cmake --version
 
 install:
-  - chdir
+  - set ROOTPATH=%cd%
+  - echo %ROOTPATH%
   - ls
 
   - git submodule update --init --recursive
 
-#   # install hdf5
-#   - mkdir hdf5lib
-#   - cd hdf5lib
-#   - if "%PYTHON_VERSION%" == "2.7.14" if "%PYTHON_ARCH%" == "32" curl -LvkO https://anaconda.org/anaconda/hdf5/1.8.17/download/win-32/hdf5-1.8.17-vc9_0.tar.bz2
-#   #- if "%PYTHON_VERSION%" == "2.7.12" if "%PYTHON_ARCH%" == "64" curl -LvkO https://anaconda.org/anaconda/hdf5/1.8.16/download/win-64/hdf5-1.8.16-vc9_0.tar.bz2
-#   - if "%PYTHON_VERSION%" == "2.7.14" 7z x -y hdf5-1.8.17-vc9_0.tar.bz2
-#   - if "%PYTHON_VERSION%" == "2.7.14" 7z x -y hdf5-1.8.17-vc9_0.tar
-#   - if NOT "%PYTHON_VERSION%" == "2.7.14" if "%PYTHON_ARCH%" == "32" curl -LvkO https://anaconda.org/anaconda/hdf5/1.8.17/download/win-32/hdf5-1.8.17-vc14_0.tar.bz2
-#   - if NOT "%PYTHON_VERSION%" == "2.7.14" if "%PYTHON_ARCH%" == "64" curl -LvkO https://anaconda.org/anaconda/hdf5/1.8.17/download/win-64/hdf5-1.8.17-vc14_0.tar.bz2
-#   - if NOT "%PYTHON_VERSION%" == "2.7.14" 7z x -y hdf5-1.8.17-vc14_0.tar.bz2
-#   - if NOT "%PYTHON_VERSION%" == "2.7.14" 7z x -y hdf5-1.8.17-vc14_0.tar
-#   - mkdir "C:/Program Files (x86)/HDF_Group/HDF5/1.8.17"
-#   - xcopy Library "C:/Program Files (x86)/HDF_Group/HDF5/1.8.17" /s /e /y
-#   - cd ..
-# 
+  - md build
+  - cd build
+
+  # install hdf5
+  - md hdf5lib
+  - cd hdf5lib
+  - if "%PYTHON_VERSION%" == "27" if "%PYTHON_ARCH%" == "32" curl -LvkO https://anaconda.org/anaconda/hdf5/1.8.17/download/win-32/hdf5-1.8.17-vc9_0.tar.bz2
+  - if "%PYTHON_VERSION%" == "27" if "%PYTHON_ARCH%" == "64" curl -LvkO https://anaconda.org/anaconda/hdf5/1.8.17/download/win-64/hdf5-1.8.17-vc9_0.tar.bz2
+  - if "%PYTHON_VERSION%" == "27" 7z x -y hdf5-1.8.17-vc9_0.tar.bz2
+  - if "%PYTHON_VERSION%" == "27" 7z x -y hdf5-1.8.17-vc9_0.tar
+  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "32" curl -LvkO https://anaconda.org/anaconda/hdf5/1.8.17/download/win-32/hdf5-1.8.17-vc14_0.tar.bz2
+  - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "64" curl -LvkO https://anaconda.org/anaconda/hdf5/1.8.17/download/win-64/hdf5-1.8.17-vc14_0.tar.bz2
+  - if "%PYTHON_VERSION%" == "36" 7z x -y hdf5-1.8.17-vc14_0.tar.bz2
+  - if "%PYTHON_VERSION%" == "36" 7z x -y hdf5-1.8.17-vc14_0.tar
+  - set HDF5PATH="C:/Program Files (x86)/HDF_Group/HDF5/1.8.17"
+  - md %HDF5PATH%
+  - xcopy Library %HDF5PATH% /s /e /y
+  - ls %HDF5PATH%
+  - cd ..
+
 #   # install stdint
 #   - if "%PYTHON_VERSION%" == "2.7.14" curl -O http://ftp.vector.co.jp/43/28/2114/stdint-20070624.zip
 #   - if "%PYTHON_VERSION%" == "2.7.14" unzip stdint-20070624.zip
