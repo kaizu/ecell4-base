@@ -56,7 +56,7 @@ install:
   - if "%PYTHON_VERSION%" == "36" if "%PYTHON_ARCH%" == "64" curl -LvkO https://anaconda.org/anaconda/hdf5/1.8.17/download/win-64/hdf5-1.8.17-vc14_0.tar.bz2
   - if "%PYTHON_VERSION%" == "36" 7z x -y hdf5-1.8.17-vc14_0.tar.bz2
   - if "%PYTHON_VERSION%" == "36" 7z x -y hdf5-1.8.17-vc14_0.tar
-  - set HDF5PATH=C:/Program Files (x86)/HDF_Group/HDF5/1.8.17
+  - set "HDF5PATH=C:/Program Files (x86)/HDF_Group/HDF5/1.8.17"
   - md %HDF5PATH%
   - xcopy Library %HDF5PATH% /s /e /y
   - ls %HDF5PATH%
