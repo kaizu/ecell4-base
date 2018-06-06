@@ -12,9 +12,10 @@ environment:
       PYTHON_VERSION: "27"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python27-x64"
-      PYTHON_VERSION: "27"
-      PYTHON_ARCH: "64"
+    #XXX: "Visual Studio 9 2008 Win64" is not prepared.
+    # - PYTHON: "C:\\Python27-x64"
+    #   PYTHON_VERSION: "27"
+    #   PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python36"
       PYTHON_VERSION: "36"
@@ -41,6 +42,7 @@ install:
   - "python -m pip install --upgrade pip"
   - if "%PYTHON_VERSION%" == "27" python -m pip install cython
   - if "%PYTHON_VERSION%" == "36" python -m pip install Cython --install-option="--no-cython-compile"
+  - pip install wheel
 
   - md build
   - cd build
@@ -100,9 +102,8 @@ install:
   - cd %ROOTPATH%/build/python
   - if "%PYTHON_VERSION%" == "27" python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%ROOTPATH%;%STDINTPATH%;%GSLPATH%/include -L%GSLPATH%/lib;"%HDF5PATH%\lib"
   - if "%PYTHON_VERSION%" == "36" python setup.py build_ext -I"%HDF5PATH%\include";%BOOST_ROOT%;%GSLPATH% -L%GSLPATH%/Release;"%HDF5PATH%\lib"
+  - python setup.py bdist_wheel -v
   - ls
-  # - "pip install wheel"
-  # - "python setup.py bdist_wheel -v"
 
 # # test_script:
 # #   - "build.cmd %PYTHON%\\python.exe setup.py test"
